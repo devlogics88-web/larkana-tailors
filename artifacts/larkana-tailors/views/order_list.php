@@ -7,6 +7,12 @@ $orders = getOrders(['search' => $search, 'status' => $status]);
   <h2>&#128196; All Orders (تمام آرڈرز)</h2>
   <a href="?page=order_new" class="btn btn-success btn-sm">+ New Order</a>
 </div>
+<?php if ($msg = flash('order_ok')): ?>
+<div class="alert alert-success"><?= h($msg) ?></div>
+<?php endif; ?>
+<?php if ($err = flash('order_err')): ?>
+<div class="alert alert-error"><?= h($err) ?></div>
+<?php endif; ?>
 
 <div class="card">
   <div class="card-body" style="padding:8px;">
