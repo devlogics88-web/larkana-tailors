@@ -31,7 +31,11 @@ if ($action) {
             break;
 
         case 'logout':
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') verifyCsrf();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                header('Location: ?page=dashboard');
+                exit;
+            }
+            verifyCsrf();
             handleLogout();
             break;
 

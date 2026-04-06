@@ -46,14 +46,18 @@ function getCustomer(int $id): ?array {
 }
 
 function saveCustomer(array $data): int {
+    $name = trim($data['name'] ?? '');
+    if ($name === '') {
+        throw new \InvalidArgumentException('Customer name is required.');
+    }
     $db = getDB();
     if (!empty($data['id'])) {
         $db->prepare("UPDATE customers SET name=?, phone=?, address=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-           ->execute([$data['name'], $data['phone'], $data['address'], $data['notes'], $data['id']]);
+           ->execute([$name, $data['phone'], $data['address'], $data['notes'], $data['id']]);
         return (int)$data['id'];
     }
     $db->prepare("INSERT INTO customers (name, phone, address, notes) VALUES (?,?,?,?)")
-       ->execute([$data['name'], $data['phone'], $data['address'], $data['notes']]);
+       ->execute([$name, $data['phone'], $data['address'], $data['notes']]);
     return (int)$db->lastInsertId();
 }
 
