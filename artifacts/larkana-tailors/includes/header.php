@@ -18,7 +18,10 @@ $user = currentUser();
   </div>
   <div class="topbar-right">
     <span class="user-info">&#128100; <?= h($user['full_name'] ?: $user['username']) ?> (<?= h(ucfirst($user['role'])) ?>)</span>
-    <a href="?action=logout" class="btn-logout" onclick="return confirm('Logout?')">Logout</a>
+    <form method="POST" action="?action=logout" style="display:inline;" onsubmit="return confirm('Logout?')">
+      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+      <button type="submit" class="btn-logout">Logout</button>
+    </form>
   </div>
 </div>
 <div class="layout">

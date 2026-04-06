@@ -70,7 +70,18 @@ function saveOrder(array $data, array $measurements): int {
     $userId = $_SESSION['user_id'];
     $isEdit = !empty($data['id']);
 
-    $data['remaining'] = ($data['total_price'] ?? 0) - ($data['advance_paid'] ?? 0);
+    // Server-side validation before touching the DB.
+    $totalPrice  = (float)($data['total_price'] ?? 0);
+    $advancePaid = (float)($data['advance_paid'] ?? 0);
+    if ($totalPrice < 0)   throw new RuntimeException('Total price cannot be negative.');
+    if ($advancePaid < 0)  throw new RuntimeException('Advance paid cannot be negative.');
+    if ($advancePaid > $totalPrice) throw new RuntimeException('Advance paid cannot exceed total price.');
+    if (($data['cloth_source'] ?? '') === 'shop') {
+        if (empty($data['stock_item_id'])) throw new RuntimeException('Please select a cloth item from stock.');
+        if ((float)($data['meters_used'] ?? 0) <= 0) throw new RuntimeException('Meters used must be greater than zero for shop cloth.');
+    }
+
+    $data['remaining'] = $totalPrice - $advancePaid;
 
     // Determine what stock was previously used (for edits).
     $oldStockItemId = null;
