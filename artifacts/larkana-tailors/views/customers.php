@@ -1,9 +1,9 @@
 <?php
 $search = trim($_GET['q'] ?? '');
-$customers = $search ? searchCustomers($search) : [];
+$customers = $search ? searchCustomers($search) : getAllCustomers();
 ?>
 <div class="page-header">
-  <h2>&#128101; Customer Search (کسٹمر تلاش)</h2>
+  <h2>&#128101; Customers (کسٹمر تلاش)</h2>
   <a href="?page=order_new" class="btn btn-success btn-sm">+ New Order</a>
 </div>
 
@@ -22,12 +22,12 @@ $customers = $search ? searchCustomers($search) : [];
 
 <?php if (!empty($customers)): ?>
 <div class="card">
-  <div class="card-head">Results (<?= count($customers) ?>)</div>
+  <div class="card-head">&#128101; <?= $search ? 'Search Results' : 'All Customers' ?> (<?= count($customers) ?>)</div>
   <div class="card-body" style="padding:0;">
     <table>
       <thead>
         <tr>
-          <th>#</th>
+          <th>Customer ID</th>
           <th>Name (نام)</th>
           <th>Phone (فون)</th>
           <th>Address (پتہ)</th>
@@ -39,7 +39,7 @@ $customers = $search ? searchCustomers($search) : [];
       <tbody>
         <?php foreach ($customers as $c): ?>
         <tr>
-          <td><?= h($c['id']) ?></td>
+          <td style="font-family:monospace; font-size:11px; color:#1565c0; font-weight:bold;">CID-<?= str_pad($c['id'], 5, '0', STR_PAD_LEFT) ?></td>
           <td class="bold"><?= h($c['name']) ?></td>
           <td><?= h($c['phone'] ?? '-') ?></td>
           <td><?= h($c['address'] ?? '-') ?></td>
@@ -56,5 +56,5 @@ $customers = $search ? searchCustomers($search) : [];
   </div>
 </div>
 <?php elseif (!$search): ?>
-<div class="alert alert-info">Enter a customer name or phone number to search. (نام یا فون نمبر درج کریں)</div>
+<div class="alert alert-info">No customers yet. Add new customers via the "New Order" form. (ابھی تک کوئی کسٹمر نہیں۔)</div>
 <?php endif; ?>

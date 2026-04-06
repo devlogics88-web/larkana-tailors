@@ -6,6 +6,19 @@ if (!$orderId) { echo '<p>Invalid order.</p>'; return; }
 $order = getOrder($orderId);
 if (!$order) { echo '<p>Order not found.</p>'; return; }
 $m = $order['measurements'] ?? [];
+
+// Pricing breakdown
+$stitchingPrice = (float)($order['stitching_price'] ?? 0);
+$metersUsed     = (float)($order['meters_used'] ?? 0);
+$sellPerMeter   = (float)($order['stock_sell_per_meter'] ?? 0);
+$clothCost      = ($order['cloth_source'] === 'shop' && $metersUsed > 0) ? $metersUsed * $sellPerMeter : 0;
+$totalPrice     = (float)($order['total_price'] ?? 0);
+$advancePaid    = (float)($order['advance_paid'] ?? 0);
+$remaining      = (float)($order['remaining'] ?? 0);
+
+// Customer ID formatted
+$customerId = (int)($order['customer_id'] ?? 0);
+$customerRef = $customerId ? 'CID-' . str_pad($customerId, 5, '0', STR_PAD_LEFT) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,7 +28,7 @@ $m = $order['measurements'] ?? [];
 <link rel="stylesheet" href="assets/style.css">
 <style>
 body { background: #fff; margin: 0; padding: 10px; }
-@media screen { .invoice-wrapper { max-width: 380px; margin: 0 auto; } }
+@media screen { .invoice-wrapper { max-width: 400px; margin: 0 auto; } }
 </style>
 </head>
 <body>
@@ -28,10 +41,13 @@ body { background: #fff; margin: 0; padding: 10px; }
 <div class="invoice-wrapper">
   <div class="copy-title"><?= $isLabour ? 'STITCHING LABOUR COPY (لیبر کاپی)' : 'CUSTOMER COPY (کسٹمر کاپی)' ?></div>
 
+  <div style="text-align:center; margin-bottom:4px;">
+    <img src="assets/logo.jpeg" alt="Logo" style="height:40px; width:auto;">
+  </div>
   <div class="inv-shop-name">Larkana Tailors &amp; Cloth House</div>
   <div class="inv-shop-sub">Gents Specialist &mdash; Lakhmir Khan</div>
-  <div class="inv-shop-sub">SOAN GARDEN, Shahid Arcade, Main Double Road<br>Opposite Bank Islami, Islamabad</div>
-  <div class="inv-shop-sub">&#128222; 0300-2151261</div>
+  <div class="inv-shop-sub"><?= h(getSetting('shop_address','SOAN GARDEN, Shahid Arcade, Islamabad')) ?></div>
+  <div class="inv-shop-sub">&#128222; <?= h(getSetting('shop_phone','0300-2151261')) ?></div>
   <div class="inv-divider"></div>
 
   <div class="inv-section">
@@ -40,6 +56,7 @@ body { background: #fff; margin: 0; padding: 10px; }
   </div>
   <div class="inv-section">
     <label>Customer:</label> <strong><?= h($order['customer_name']) ?></strong>
+    <?php if ($customerRef): ?>&nbsp;<span style="color:#888;font-size:9px;">(<?= h($customerRef) ?>)</span><?php endif; ?>
   </div>
   <?php if ($order['customer_phone']): ?>
   <div class="inv-section">
@@ -57,10 +74,16 @@ body { background: #fff; margin: 0; padding: 10px; }
     <?= $order['stitch_type'] ? ' / ' . h($order['stitch_type']) : '' ?>
   </div>
   <?php endif; ?>
-  <?php if ($order['cloth_source'] === 'shop' && $order['brand_name']): ?>
+  <?php if ($order['cloth_source'] === 'shop'): ?>
   <div class="inv-section">
-    <label>Cloth:</label> <?= h($order['brand_name']) ?>
-    <?= $order['meters_used'] ? ' (' . h($order['meters_used']) . 'm)' : '' ?>
+    <label>Cloth:</label>
+    <?= h($order['brand_name'] ?: ($order['stock_brand_name'] ?? '')) ?>
+    <?php if ($metersUsed > 0): ?>
+      — <strong><?= h($metersUsed) ?>m</strong>
+      <?php if ($sellPerMeter > 0): ?>
+        @ Rs.<?= h(number_format($sellPerMeter,0)) ?>/m
+      <?php endif; ?>
+    <?php endif; ?>
   </div>
   <?php elseif ($order['cloth_source'] === 'self'): ?>
   <div class="inv-section"><label>Cloth:</label> Self (اپنا کپڑا)</div>
@@ -68,45 +91,67 @@ body { background: #fff; margin: 0; padding: 10px; }
 
   <div class="inv-divider"></div>
 
-  <!-- MEASUREMENTS -->
-  <div style="font-size:11px; font-weight:bold; margin-bottom:4px;">Measurements (پیمائش):</div>
-  <div class="inv-measure-grid">
+  <!-- MEASUREMENTS matching physical card layout -->
+  <div style="font-size:11px; font-weight:bold; margin-bottom:3px;">Measurements (پیمائش):</div>
+  <table style="width:100%; border-collapse:collapse; font-size:10px;">
     <?php
-    $fields = [
-      'm_shirt_length'  => ['Shirt Length', 'لمبائی قمیص', 'shirt_length'],
-      'm_sleeve'        => ['Sleeve', 'آستین', 'sleeve'],
-      'm_arm'           => ['Arm', 'بازو', 'arm'],
-      'm_shoulder'      => ['Shoulder', 'تیرہ', 'shoulder'],
-      'm_collar'        => ['Collar', 'گلا', 'collar'],
-      'm_chest'         => ['Chest', 'چپٹ', 'chest'],
-      'm_waist'         => ['Waist', 'کمر', 'waist'],
-      'm_hip'           => ['Hip', 'گیرہ', 'hip'],
-      'm_cuff'          => ['Cuff', 'کارنوک', 'cuff'],
-      'm_shalwar_length'=> ['Shlwr Length', 'شلوار لمبائی', 'shalwar_length'],
-      'm_shalwar_bottom'=> ['Pancha', 'پانچہ', 'shalwar_bottom'],
-      'm_shalwar_waist' => ['Shlwr Waist', 'شلوار گیرہ', 'shalwar_waist'],
-      'm_trouser_length' => ['Trouser L', 'ٹراؤزر', 'trouser_length'],
-      'm_trouser_bottom' => ['Trouser Bottom', 'موہری ٹراؤزر', 'trouser_bottom'],
+    $rows = [
+      ['لمبائی قمیص','Shirt Length','shirt_length',  'بازو','Arm/Bazu','arm'],
+      ['تیرہ','Shoulder','shoulder',                  'گلا','Collar','collar'],
+      ['چسٹ','Chest','chest',                         'کمر','Waist','waist'],
+      ['گیرہ','Hip','hip',                            'شلوار لمبائی','Shlwr Length','shalwar_length'],
+      ['پانچہ','Shalwar Bottom','shalwar_bottom',     'شلوار گیرہ','Shlwr Waist','shalwar_waist'],
+      ['کارنوک','Cuff','cuff',                        'آستین','Sleeve','sleeve'],
     ];
-    foreach ($fields as [$en, $ur, $key]):
-      $val = $m[$key] ?? '';
-      if (!$val) continue;
+    foreach ($rows as [$urL,$enL,$keyL, $urR,$enR,$keyR]):
+      $vL = $m[$keyL] ?? ''; $vR = $m[$keyR] ?? '';
+      if (!$vL && !$vR) continue;
     ?>
-    <div class="inv-measure-item">
-      <div class="im-label"><?= $en ?></div>
-      <div class="im-val"><?= h($val) ?></div>
-    </div>
+    <tr>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e3f2fd;"><?= $urL ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vL) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e3f2fd;"><?= $urR ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vR) ?></td>
+    </tr>
     <?php endforeach; ?>
-    <?php if (!empty($m['front_style'])): ?>
-    <div class="inv-measure-item">
-      <div class="im-label">Front Style</div>
-      <div class="im-val"><?= h($m['front_style']) ?></div>
-    </div>
-    <?php endif; ?>
-  </div>
+  </table>
+
+  <?php
+  // Bottom style section
+  $styleFields = [
+    ['فرنٹ','front_style'], ['مین فل','main_full'], ['مین ہاف','main_half'],
+    ['کف','kaf'], ['گیراچورس','gera_chorus'], ['سائز','size_note'],
+    ['شلوار','shalwar_style'], ['گیراول','gera_oval'],
+    ['ٹراؤزر','trouser_length'], ['موہری','trouser_bottom'],
+  ];
+  $hasStyle = false;
+  foreach ($styleFields as [,$k]) { if (!empty($m[$k])) { $hasStyle = true; break; } }
+  if ($hasStyle):
+  ?>
+  <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:2px;">
+    <?php
+    $pairs = array_chunk($styleFields, 2);
+    foreach ($pairs as $pair):
+      $p0 = $pair[0]; $p1 = $pair[1] ?? null;
+      $v0 = $m[$p0[1]] ?? ''; $v1 = $p1 ? ($m[$p1[1]] ?? '') : '';
+      if (!$v0 && !$v1) continue;
+    ?>
+    <tr>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e3f2fd; width:22%;"><?= $p0[0] ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v0) ?></td>
+      <?php if ($p1): ?>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e3f2fd; width:22%;"><?= $p1[0] ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v1) ?></td>
+      <?php else: ?>
+      <td colspan="2"></td>
+      <?php endif; ?>
+    </tr>
+    <?php endforeach; ?>
+  </table>
+  <?php endif; ?>
 
   <?php if (!empty($m['detail'])): ?>
-  <div class="inv-section" style="margin-top:4px;">
+  <div class="inv-section" style="margin-top:3px;">
     <label>Detail:</label> <?= h($m['detail']) ?>
   </div>
   <?php endif; ?>
@@ -118,22 +163,41 @@ body { background: #fff; margin: 0; padding: 10px; }
 
   <?php if (!$isLabour): ?>
   <div class="inv-divider"></div>
-  <div class="inv-section" style="font-size:13px;">
-    <label>Total Amount:</label> <strong style="font-size:15px;"><?= formatMoney($order['total_price']) ?></strong>
-  </div>
-  <div class="inv-section">
-    <label>Advance Paid:</label> <strong><?= formatMoney($order['advance_paid']) ?></strong>
-  </div>
-  <div class="inv-section" style="color:<?= ($order['remaining'] ?? 0) > 0 ? '#c62828' : '#2e7d32' ?>; font-weight:bold;">
-    <label>Remaining:</label> <strong style="font-size:14px;"><?= formatMoney($order['remaining']) ?></strong>
-  </div>
+
+  <!-- ITEMIZED PRICING -->
+  <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px;">
+    <?php if ($order['cloth_source'] === 'shop' && $clothCost > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Cloth (<?= h($metersUsed) ?>m × Rs.<?= number_format($sellPerMeter,0) ?>)</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($clothCost) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($stitchingPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Stitching (سلائی)</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($stitchingPrice) ?></td>
+    </tr>
+    <?php endif; ?>
+    <tr style="background:#e3f2fd;">
+      <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount (کل قیمت)</td>
+      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1565c0;"><?= formatMoney($totalPrice) ?></td>
+    </tr>
+    <tr>
+      <td style="padding:2px 4px;">Advance Paid (ایڈوانس)</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;"><?= formatMoney($advancePaid) ?></td>
+    </tr>
+    <tr style="background:<?= $remaining > 0 ? '#fce4ec' : '#e8f5e9' ?>;">
+      <td style="padding:3px 4px; font-weight:bold; font-size:12px;">Balance Due (باقی رقم)</td>
+      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:14px; color:<?= $remaining > 0 ? '#c62828' : '#2e7d32' ?>;"><?= formatMoney($remaining) ?></td>
+    </tr>
+  </table>
   <?php endif; ?>
 
   <div class="inv-divider"></div>
   <div class="inv-footer">
     Thank you for your trust! (شکریہ)<br>
     Larkana Tailors &amp; Cloth House<br>
-    0300-2151261
+    <?= h(getSetting('shop_phone','0300-2151261')) ?>
   </div>
 </div>
 </body>

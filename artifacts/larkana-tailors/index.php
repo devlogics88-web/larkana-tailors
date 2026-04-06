@@ -77,6 +77,13 @@ if ($action) {
                     'trouser_length' => $_POST['m_trouser_length'] ?? null,
                     'trouser_bottom' => $_POST['m_trouser_bottom'] ?? null,
                     'front_style'    => $_POST['m_front_style'] ?? null,
+                    'main_full'      => $_POST['m_main_full'] ?? null,
+                    'main_half'      => $_POST['m_main_half'] ?? null,
+                    'kaf'            => $_POST['m_kaf'] ?? null,
+                    'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
+                    'size_note'      => $_POST['m_size_note'] ?? null,
+                    'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
+                    'gera_oval'      => $_POST['m_gera_oval'] ?? null,
                     'detail'         => $_POST['m_detail'] ?? null,
                 ];
 
@@ -97,21 +104,22 @@ if ($action) {
                         throw new RuntimeException('Please select or add a customer.');
                     }
                     $orderData = [
-                        'id'            => (int)($_POST['order_id'] ?? 0) ?: null,
-                        'customer_id'   => $customerId,
-                        'order_date'    => $_POST['order_date'] ?? date('Y-m-d'),
-                        'delivery_date' => $_POST['delivery_date'] ?? null,
-                        'suit_type'     => $_POST['suit_type'] ?? '',
-                        'stitch_type'   => $_POST['stitch_type'] ?? '',
-                        'cloth_source'  => $clothSource,
-                        'stock_item_id' => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
-                        'meters_used'   => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
-                        'brand_name'    => $_POST['brand_name'] ?? '',
-                        'total_price'   => $totalPrice,
-                        'advance_paid'  => $advancePaid,
-                        'remaining'     => (float)($_POST['remaining'] ?? 0),
-                        'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
-                        'notes'         => trim($_POST['notes'] ?? ''),
+                        'id'              => (int)($_POST['order_id'] ?? 0) ?: null,
+                        'customer_id'     => $customerId,
+                        'order_date'      => $_POST['order_date'] ?? date('Y-m-d'),
+                        'delivery_date'   => $_POST['delivery_date'] ?? null,
+                        'suit_type'       => $_POST['suit_type'] ?? '',
+                        'stitch_type'     => $_POST['stitch_type'] ?? '',
+                        'cloth_source'    => $clothSource,
+                        'stock_item_id'   => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
+                        'meters_used'     => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
+                        'brand_name'      => $_POST['brand_name'] ?? '',
+                        'stitching_price' => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price', '2000')),
+                        'total_price'     => $totalPrice,
+                        'advance_paid'    => $advancePaid,
+                        'remaining'       => (float)($_POST['remaining'] ?? 0),
+                        'status'          => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
+                        'notes'           => trim($_POST['notes'] ?? ''),
                     ];
                     $orderId = saveOrder($orderData, $measurements);
                     $db->commit();
@@ -152,6 +160,13 @@ if ($action) {
                 'trouser_length' => $_POST['m_trouser_length'] ?? null,
                 'trouser_bottom' => $_POST['m_trouser_bottom'] ?? null,
                 'front_style'    => $_POST['m_front_style'] ?? null,
+                'main_full'      => $_POST['m_main_full'] ?? null,
+                'main_half'      => $_POST['m_main_half'] ?? null,
+                'kaf'            => $_POST['m_kaf'] ?? null,
+                'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
+                'size_note'      => $_POST['m_size_note'] ?? null,
+                'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
+                'gera_oval'      => $_POST['m_gera_oval'] ?? null,
                 'detail'         => $_POST['m_detail'] ?? null,
             ];
 
@@ -184,6 +199,7 @@ if ($action) {
                     'stock_item_id'  => (int)($_POST['stock_item_id'] ?? 0) ?: null,
                     'meters_used'    => (float)($_POST['meters_used'] ?? 0) ?: null,
                     'brand_name'     => $_POST['brand_name'] ?? '',
+                    'stitching_price' => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price','2000')),
                     'total_price'    => (float)($_POST['total_price'] ?? 0),
                     'advance_paid'   => (float)($_POST['advance_paid'] ?? 0),
                     'remaining'      => (float)($_POST['remaining'] ?? 0),
@@ -215,6 +231,13 @@ if ($action) {
                         'trouser_length' => $_POST['m_trouser_length'] ?? null,
                         'trouser_bottom' => $_POST['m_trouser_bottom'] ?? null,
                         'front_style'    => $_POST['m_front_style'] ?? null,
+                        'main_full'      => $_POST['m_main_full'] ?? null,
+                        'main_half'      => $_POST['m_main_half'] ?? null,
+                        'kaf'            => $_POST['m_kaf'] ?? null,
+                        'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
+                        'size_note'      => $_POST['m_size_note'] ?? null,
+                        'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
+                        'gera_oval'      => $_POST['m_gera_oval'] ?? null,
                         'detail'         => $_POST['m_detail'] ?? null,
                     ],
                 ];
@@ -321,6 +344,30 @@ if ($action) {
             header('Location: ?page=orders');
             exit;
 
+        case 'backup_db':
+            requireAdmin();
+            $dbPath = __DIR__ . '/data/larkana.db';
+            if (!file_exists($dbPath)) { echo 'Database not found.'; exit; }
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="larkana_backup_' . date('Ymd_His') . '.db"');
+            header('Content-Length: ' . filesize($dbPath));
+            readfile($dbPath);
+            exit;
+
+        case 'save_settings':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=settings'); exit; }
+            verifyCsrf();
+            $keys = ['default_stitching_price', 'shop_name', 'shop_phone', 'shop_address'];
+            foreach ($keys as $k) {
+                if (isset($_POST[$k])) {
+                    setSetting($k, trim($_POST[$k]));
+                }
+            }
+            flash('settings_ok', 'Settings saved successfully.');
+            header('Location: ?page=settings');
+            exit;
+
         case 'add_worker':
             requireAdmin();
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=workers'); exit; }
@@ -424,6 +471,7 @@ $viewFile = __DIR__ . '/views/' . match($page) {
     'stock'           => isAdmin() ? 'stock.php' : 'dashboard.php',
     'reports'         => isAdmin() ? 'reports.php' : 'dashboard.php',
     'workers'         => isAdmin() ? 'workers.php' : 'dashboard.php',
+    'settings'        => isAdmin() ? 'settings.php' : 'dashboard.php',
     default           => 'dashboard.php',
 };
 

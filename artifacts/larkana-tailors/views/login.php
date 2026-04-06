@@ -6,13 +6,14 @@
 <title>Login &mdash; Larkana Tailors</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
-<body style="background:#e8eaf6;">
-<div style="padding-top:40px;">
+<body style="background: linear-gradient(135deg, #0d2137 0%, #1565c0 60%, #1e88e5 100%); min-height:100vh;">
+<div style="padding-top:30px;">
 <div class="login-wrap">
-  <div class="login-head">
-    <div style="font-size:28px; margin-bottom:4px;">&#x2702;</div>
-    <h1>Larkana Tailors &amp; Cloth House</h1>
-    <p>Gents Specialist &mdash; Islamabad</p>
+  <div class="login-head" style="padding:20px 16px 14px;">
+    <img src="assets/logo.jpeg" alt="Larkana Tailors Logo"
+         style="height:80px; width:auto; display:block; margin:0 auto 10px; border-radius:4px; object-fit:cover;">
+    <h1 style="font-size:18px; letter-spacing:.5px;">Larkana Tailors &amp; Cloth House</h1>
+    <p style="font-size:12px; color:#90caf9; margin-top:4px;">Gents Specialist &mdash; Islamabad</p>
   </div>
   <div class="login-body">
     <?php if (!empty($error)): ?>

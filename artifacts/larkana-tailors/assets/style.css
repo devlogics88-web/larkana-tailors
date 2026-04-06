@@ -2,11 +2,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy:    #1a237e;
-  --navy2:   #283593;
-  --navy3:   #3949ab;
-  --blue-lt: #e8eaf6;
-  --blue-md: #c5cae9;
+  --navy:    #1565c0;
+  --navy2:   #1976d2;
+  --navy3:   #1e88e5;
+  --blue-lt: #e3f2fd;
+  --blue-md: #90caf9;
   --green:   #2e7d32;
   --red:     #c62828;
   --orange:  #e65100;
@@ -18,7 +18,7 @@
   --gray4:   #bdbdbd;
   --gray5:   #9e9e9e;
   --text:    #212121;
-  --border:  #9fa8da;
+  --border:  #64b5f6;
 }
 
 body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; background: var(--gray2); color: var(--text); }
@@ -281,3 +281,68 @@ tr:nth-child(even):hover td { background: var(--blue-lt); }
 .red   { color: var(--red); }
 .bold  { font-weight: bold; }
 .small { font-size: 11px; color: var(--gray5); }
+
+/* MEASUREMENT TABLE (order form) */
+.measure-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.measure-table td { border: 1px solid var(--blue-md); padding: 3px 4px; }
+.measure-table .label-cell {
+  background: var(--blue-lt);
+  font-weight: bold;
+  font-size: 10px;
+  line-height: 1.3;
+  width: 24%;
+  text-align: center;
+}
+.measure-table input {
+  width: 100%; border: none; padding: 3px 4px;
+  font-size: 12px; font-weight: bold; font-family: inherit;
+  background: transparent;
+}
+.measure-table input:focus { background: #fffde7; outline: 1px solid var(--navy2); }
+
+/* CUSTOMER PANEL */
+.customer-panel {
+  background: var(--blue-lt);
+  border: 1px solid var(--blue-md);
+  padding: 7px 10px; font-size: 12px;
+  margin-top: 6px;
+}
+.search-box { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+.search-box input { flex: 1; padding: 5px 8px; border: 1px solid var(--gray4); font-size: 12px; }
+.section-divider {
+  font-weight: bold; font-size: 11px; background: var(--gray2);
+  padding: 4px 8px; border-left: 3px solid var(--navy); margin: 8px 0 4px;
+}
+
+/* INVOICE STYLES */
+@media print {
+  .no-print, .topbar, .sidebar, .page-header, nav { display: none !important; }
+  body { background: #fff !important; margin: 0 !important; }
+  .main-content { padding: 0 !important; margin: 0 !important; }
+  .invoice-wrapper { max-width: 100% !important; }
+}
+.invoice-wrapper {
+  font-family: Arial, sans-serif; font-size: 11px;
+  max-width: 380px; background: #fff; padding: 10px;
+  border: 1px solid #ccc;
+}
+.copy-title {
+  text-align: center; font-weight: bold; font-size: 9px; letter-spacing: 1px;
+  border: 1px dashed #aaa; padding: 2px 6px; margin-bottom: 4px;
+  color: #666;
+}
+.inv-shop-name {
+  text-align: center; font-weight: bold; font-size: 16px;
+  color: var(--navy); margin: 2px 0;
+}
+.inv-shop-sub {
+  text-align: center; font-size: 10px; color: #555;
+}
+.inv-divider { border-top: 1px dashed #aaa; margin: 6px 0; }
+.inv-section { margin: 2px 0; font-size: 11px; }
+.inv-section label { font-weight: bold; font-size: 10px; color: #555; margin-right: 3px; }
+.inv-footer {
+  text-align: center; font-size: 9px; color: #777;
+  margin-top: 6px; line-height: 1.6;
+}
+.btn-print { background: #7b1fa2; color: #fff; }

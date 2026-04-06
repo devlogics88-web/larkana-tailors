@@ -64,6 +64,7 @@ function initSchema(PDO $pdo): void {
             stock_item_id INTEGER,
             meters_used REAL,
             brand_name TEXT,
+            stitching_price REAL DEFAULT 2000,
             total_price REAL DEFAULT 0,
             advance_paid REAL DEFAULT 0,
             remaining REAL DEFAULT 0,
@@ -80,21 +81,28 @@ function initSchema(PDO $pdo): void {
         CREATE TABLE IF NOT EXISTS measurements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_id INTEGER UNIQUE NOT NULL,
-            shirt_length REAL,
-            sleeve REAL,
-            arm REAL,
-            shoulder REAL,
-            collar REAL,
-            chest REAL,
-            waist REAL,
-            hip REAL,
-            shalwar_length REAL,
-            shalwar_bottom REAL,
+            shirt_length TEXT,
+            sleeve TEXT,
+            arm TEXT,
+            shoulder TEXT,
+            collar TEXT,
+            chest TEXT,
+            waist TEXT,
+            hip TEXT,
+            shalwar_length TEXT,
+            shalwar_bottom TEXT,
             shalwar_waist TEXT,
             cuff TEXT,
-            trouser_length REAL,
-            trouser_bottom REAL,
+            trouser_length TEXT,
+            trouser_bottom TEXT,
             front_style TEXT,
+            main_full TEXT,
+            main_half TEXT,
+            kaf TEXT,
+            gera_chorus TEXT,
+            size_note TEXT,
+            shalwar_style TEXT,
+            gera_oval TEXT,
             detail TEXT,
             FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
         );
@@ -110,26 +118,48 @@ function initSchema(PDO $pdo): void {
             FOREIGN KEY (stock_item_id) REFERENCES stock_items(id),
             FOREIGN KEY (order_id) REFERENCES orders(id)
         );
+
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
     ");
 
-    // Migrate existing databases: add arm column if not present.
-    try {
-        $pdo->exec("ALTER TABLE measurements ADD COLUMN arm REAL");
-    } catch (PDOException $ignored) {
-        // Column already exists — safe to ignore.
+    // Migrations for existing databases
+    $migrations = [
+        "ALTER TABLE measurements ADD COLUMN arm TEXT",
+        "ALTER TABLE measurements ADD COLUMN main_full TEXT",
+        "ALTER TABLE measurements ADD COLUMN main_half TEXT",
+        "ALTER TABLE measurements ADD COLUMN kaf TEXT",
+        "ALTER TABLE measurements ADD COLUMN gera_chorus TEXT",
+        "ALTER TABLE measurements ADD COLUMN size_note TEXT",
+        "ALTER TABLE measurements ADD COLUMN shalwar_style TEXT",
+        "ALTER TABLE measurements ADD COLUMN gera_oval TEXT",
+        "ALTER TABLE orders ADD COLUMN stitching_price REAL DEFAULT 2000",
+    ];
+    foreach ($migrations as $sql) {
+        try { $pdo->exec($sql); } catch (PDOException $ignored) {}
     }
 
+    // Seed admin user
     $admin = $pdo->query("SELECT COUNT(*) FROM users WHERE username='larkana'")->fetchColumn();
     if (!$admin) {
         $hash = password_hash('tailor', PASSWORD_DEFAULT);
         $pdo->prepare("INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, 'admin', ?)")
             ->execute(['larkana', $hash, 'Lakhmir Khan (Admin)']);
     }
+
+    // Seed default settings
+    $pdo->exec("INSERT OR IGNORE INTO settings (key, value) VALUES
+        ('default_stitching_price', '2000'),
+        ('shop_name', 'Larkana Tailors & Cloth House'),
+        ('shop_phone', '0300-2151261'),
+        ('shop_address', 'SOAN GARDEN, Shahid Arcade, Main Double Road, Islamabad')
+    ");
 }
 
 function generateOrderNo(): string {
     $db = getDB();
-    // Use MAX to stay collision-free even after order deletions.
     $maxNo = $db->query("SELECT MAX(CAST(SUBSTR(order_no, 4) AS INTEGER)) FROM orders WHERE order_no LIKE 'LT-%'")->fetchColumn();
     return 'LT-' . str_pad((int)$maxNo + 1, 5, '0', STR_PAD_LEFT);
 }

@@ -17,6 +17,20 @@ function formatMoney(mixed $v): string {
     return 'Rs. ' . number_format((float)$v, 0);
 }
 
+function getSetting(string $key, string $default = ''): string {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT value FROM settings WHERE key=?");
+    $stmt->execute([$key]);
+    $val = $stmt->fetchColumn();
+    return $val !== false ? (string)$val : $default;
+}
+
+function setSetting(string $key, string $value): void {
+    $db = getDB();
+    $db->prepare("INSERT INTO settings (key, value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+       ->execute([$key, $value]);
+}
+
 function formatDate(?string $d): string {
     if (!$d) return '-';
     return date('d-M-Y', strtotime($d));
@@ -35,6 +49,19 @@ function searchCustomers(string $query): array {
         ORDER BY c.name LIMIT 20
     ");
     $stmt->execute([$like, $like]);
+    return $stmt->fetchAll();
+}
+
+function getAllCustomers(int $limit = 200): array {
+    $db   = getDB();
+    $stmt = $db->prepare("
+        SELECT c.*, COALESCE(oc.cnt, 0) AS order_count
+        FROM customers c
+        LEFT JOIN (SELECT customer_id, COUNT(*) AS cnt FROM orders GROUP BY customer_id) oc
+            ON oc.customer_id = c.id
+        ORDER BY c.id DESC LIMIT ?
+    ");
+    $stmt->execute([$limit]);
     return $stmt->fetchAll();
 }
 
@@ -64,8 +91,12 @@ function saveCustomer(array $data): int {
 function getOrder(int $id): ?array {
     $db = getDB();
     $stmt = $db->prepare("
-        SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address
-        FROM orders o LEFT JOIN customers c ON c.id = o.customer_id
+        SELECT o.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address,
+               c.id as customer_id_fk,
+               si.sell_per_meter as stock_sell_per_meter, si.brand_name as stock_brand_name
+        FROM orders o
+        LEFT JOIN customers c ON c.id = o.customer_id
+        LEFT JOIN stock_items si ON si.id = o.stock_item_id
         WHERE o.id = ?
     ");
     $stmt->execute([$id]);
@@ -137,22 +168,24 @@ function saveOrder(array $data, array $measurements): int {
         if ($isEdit) {
             $db->prepare("
                 UPDATE orders SET customer_id=?, order_date=?, delivery_date=?, suit_type=?, stitch_type=?,
-                cloth_source=?, stock_item_id=?, meters_used=?, brand_name=?, total_price=?, advance_paid=?,
-                remaining=?, status=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?
+                cloth_source=?, stock_item_id=?, meters_used=?, brand_name=?, stitching_price=?,
+                total_price=?, advance_paid=?, remaining=?, status=?, notes=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
             ")->execute([
                 $data['customer_id'], $data['order_date'], $data['delivery_date'], $data['suit_type'],
                 $data['stitch_type'], $data['cloth_source'], $data['stock_item_id'] ?: null,
-                $data['meters_used'] ?: null, $data['brand_name'], $data['total_price'],
-                $data['advance_paid'], $data['remaining'], $data['status'], $data['notes'], $data['id']
+                $data['meters_used'] ?: null, $data['brand_name'], $data['stitching_price'],
+                $data['total_price'], $data['advance_paid'], $data['remaining'],
+                $data['status'], $data['notes'], $data['id']
             ]);
             $orderId = (int)$data['id'];
         } else {
             // Retry up to 3 times on order_no uniqueness collision (MAX+1 race).
             $insertStmt = $db->prepare("
                 INSERT INTO orders (order_no, customer_id, order_date, delivery_date, suit_type, stitch_type,
-                cloth_source, stock_item_id, meters_used, brand_name, total_price, advance_paid, remaining,
-                status, notes, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                cloth_source, stock_item_id, meters_used, brand_name, stitching_price, total_price,
+                advance_paid, remaining, status, notes, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ");
             $orderId = null;
             for ($attempt = 0; $attempt < 3; $attempt++) {
@@ -162,8 +195,8 @@ function saveOrder(array $data, array $measurements): int {
                         $data['order_no'], $data['customer_id'], $data['order_date'], $data['delivery_date'],
                         $data['suit_type'], $data['stitch_type'], $data['cloth_source'],
                         $data['stock_item_id'] ?: null, $data['meters_used'] ?: null, $data['brand_name'],
-                        $data['total_price'], $data['advance_paid'], $data['remaining'],
-                        $data['status'], $data['notes'], $userId
+                        $data['stitching_price'], $data['total_price'], $data['advance_paid'],
+                        $data['remaining'], $data['status'], $data['notes'], $userId
                     ]);
                     $orderId = (int)$db->lastInsertId();
                     break;
@@ -177,7 +210,9 @@ function saveOrder(array $data, array $measurements): int {
         // Upsert measurements.
         $mFields = ['shirt_length','sleeve','arm','shoulder','collar','chest','waist','hip',
                     'shalwar_length','shalwar_bottom','shalwar_waist','cuff',
-                    'trouser_length','trouser_bottom','front_style','detail'];
+                    'trouser_length','trouser_bottom','front_style',
+                    'main_full','main_half','kaf','gera_chorus','size_note','shalwar_style','gera_oval',
+                    'detail'];
         $mVals = [];
         foreach ($mFields as $f) $mVals[$f] = $measurements[$f] ?? null;
 

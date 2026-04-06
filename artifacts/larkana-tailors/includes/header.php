@@ -12,8 +12,9 @@ $user = currentUser();
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-left">
-    <span class="shop-name">&#x2702; Larkana Tailors &amp; Cloth House</span>
+  <div class="topbar-left" style="display:flex;align-items:center;gap:8px;">
+    <img src="assets/logo.jpeg" alt="Logo" style="height:26px;width:auto;border-radius:2px;">
+    <span class="shop-name">Larkana Tailors &amp; Cloth House</span>
     <span class="shop-sub">Gents Specialist &mdash; Islamabad</span>
   </div>
   <div class="topbar-right">
@@ -28,13 +29,14 @@ $user = currentUser();
   <div class="sidebar">
     <nav>
       <a href="?page=dashboard" class="nav-item<?= $page==='dashboard'?' active':'' ?>">&#128202; Dashboard</a>
-      <a href="?page=order_new" class="nav-item<?= $page==='order_new'?' active':'' ?>">&#43; New Order (&#9654; آرڈر)</a>
+      <a href="?page=order_new" class="nav-item<?= $page==='order_new'?' active':'' ?>">&#43; New Order (نیا آرڈر)</a>
       <a href="?page=orders" class="nav-item<?= $page==='orders'?' active':'' ?>">&#128196; All Orders (آرڈرز)</a>
-      <a href="?page=customers" class="nav-item<?= $page==='customers'?' active':'' ?>">&#128101; Customer Search (کسٹمر)</a>
+      <a href="?page=customers" class="nav-item<?= $page==='customers'?' active':'' ?>">&#128101; Customers (کسٹمر)</a>
       <?php if (isAdmin()): ?>
       <a href="?page=stock" class="nav-item<?= $page==='stock'?' active':'' ?>">&#128229; Stock (اسٹاک)</a>
       <a href="?page=reports" class="nav-item<?= $page==='reports'?' active':'' ?>">&#128200; Reports (رپورٹس)</a>
       <a href="?page=workers" class="nav-item<?= $page==='workers'?' active':'' ?>">&#128119; Workers (ورکرز)</a>
+      <a href="?page=settings" class="nav-item<?= $page==='settings'?' active':'' ?>">&#9881; Settings (سیٹنگز)</a>
       <?php endif; ?>
     </nav>
     <div class="sidebar-footer">
