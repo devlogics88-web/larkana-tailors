@@ -4,10 +4,11 @@
 function searchCustomer() {
     const q = document.getElementById('customer_search_q')?.value.trim();
     if (!q || q.length < 2) return;
+    const list = document.getElementById('customer_results');
+    if (list) list.style.display = 'block';
     fetch('?action=search_customer&q=' + encodeURIComponent(q))
         .then(r => r.json())
         .then(data => {
-            const list = document.getElementById('customer_results');
             if (!list) return;
             list.innerHTML = '';
             if (!data.length) {

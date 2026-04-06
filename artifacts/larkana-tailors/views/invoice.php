@@ -85,7 +85,8 @@ body { background: #fff; margin: 0; padding: 10px; }
       'm_shalwar_length'=> ['Shlwr Length', 'شلوار لمبائی', 'shalwar_length'],
       'm_shalwar_bottom'=> ['Pancha', 'پانچہ', 'shalwar_bottom'],
       'm_shalwar_waist' => ['Shlwr Waist', 'شلوار گیرہ', 'shalwar_waist'],
-      'm_trouser_length'=> ['Trouser L', 'ٹراؤزر', 'trouser_length'],
+      'm_trouser_length' => ['Trouser L', 'ٹراؤزر', 'trouser_length'],
+      'm_trouser_bottom' => ['Trouser Bottom', 'موہری ٹراؤزر', 'trouser_bottom'],
     ];
     foreach ($fields as [$en, $ur, $key]):
       $val = $m[$key] ?? '';

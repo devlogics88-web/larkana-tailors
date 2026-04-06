@@ -268,27 +268,13 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
 </form>
 
 <script>
-// Show search results dropdown with click-outside to close
+// Close results dropdown on click-outside
 document.addEventListener('click', function(e) {
     const res = document.getElementById('customer_results');
     const box = document.getElementById('customer_search_q');
     if (res && box && !res.contains(e.target) && e.target !== box) {
         res.innerHTML = '';
-    }
-});
-document.getElementById('customer_search_q')?.addEventListener('keyup', function() {
-    const res = document.getElementById('customer_results');
-    if (res) res.style.display = 'block';
-});
-// Override searchCustomer to also show results div (guard against load-order issues).
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof searchCustomer === 'function') {
-        const _origSearch = searchCustomer;
-        window.searchCustomer = function() {
-            const res = document.getElementById('customer_results');
-            if (res) res.style.display = 'block';
-            _origSearch();
-        };
+        res.style.display = 'none';
     }
 });
 </script>
