@@ -279,11 +279,15 @@ document.getElementById('customer_search_q')?.addEventListener('keyup', function
     const res = document.getElementById('customer_results');
     if (res) res.style.display = 'block';
 });
-// Override searchCustomer to show results div
-const _origSearch = searchCustomer;
-window.searchCustomer = function() {
-    const res = document.getElementById('customer_results');
-    if (res) res.style.display = 'block';
-    _origSearch();
-};
+// Override searchCustomer to also show results div (guard against load-order issues).
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof searchCustomer === 'function') {
+        const _origSearch = searchCustomer;
+        window.searchCustomer = function() {
+            const res = document.getElementById('customer_results');
+            if (res) res.style.display = 'block';
+            _origSearch();
+        };
+    }
+});
 </script>

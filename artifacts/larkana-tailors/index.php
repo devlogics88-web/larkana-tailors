@@ -144,8 +144,14 @@ if ($action) {
         case 'delete_stock':
             requireAdmin();
             $id = (int)($_GET['id'] ?? 0);
-            if ($id) deleteStockItem($id);
-            flash('stock_ok', 'Stock item deleted.');
+            if ($id) {
+                try {
+                    deleteStockItem($id);
+                    flash('stock_ok', 'Stock item deleted.');
+                } catch (PDOException $e) {
+                    flash('stock_err', 'Cannot delete: this cloth item is referenced by existing orders.');
+                }
+            }
             header('Location: ?page=stock');
             exit;
 
