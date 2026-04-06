@@ -39,7 +39,6 @@ $customers = $search ? searchCustomers($search) : [];
       <tbody>
         <?php foreach ($customers as $c):
           $db = getDB();
-          $orderCount = $db->prepare("SELECT COUNT(*) FROM orders WHERE customer_id=?")->execute([$c['id']]) ? 0 : 0;
           $stmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE customer_id=?");
           $stmt->execute([$c['id']]);
           $orderCount = $stmt->fetchColumn();

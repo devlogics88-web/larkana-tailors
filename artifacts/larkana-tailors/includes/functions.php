@@ -68,10 +68,26 @@ function getOrder(int $id): ?array {
 function saveOrder(array $data, array $measurements): int {
     $db = getDB();
     $userId = $_SESSION['user_id'];
+    $isEdit = !empty($data['id']);
 
     $data['remaining'] = ($data['total_price'] ?? 0) - ($data['advance_paid'] ?? 0);
 
-    if (!empty($data['id'])) {
+    // For edits, fetch the original stock usage before making any changes.
+    $oldStockItemId = null;
+    $oldMetersUsed  = 0.0;
+    $oldClothSource = 'self';
+    if ($isEdit) {
+        $oldStmt = $db->prepare("SELECT cloth_source, stock_item_id, meters_used FROM orders WHERE id=?");
+        $oldStmt->execute([$data['id']]);
+        $old = $oldStmt->fetch();
+        if ($old) {
+            $oldClothSource = $old['cloth_source'];
+            $oldStockItemId = $old['stock_item_id'] ? (int)$old['stock_item_id'] : null;
+            $oldMetersUsed  = (float)($old['meters_used'] ?? 0);
+        }
+    }
+
+    if ($isEdit) {
         $db->prepare("
             UPDATE orders SET customer_id=?, order_date=?, delivery_date=?, suit_type=?, stitch_type=?,
             cloth_source=?, stock_item_id=?, meters_used=?, brand_name=?, total_price=?, advance_paid=?,
@@ -100,16 +116,16 @@ function saveOrder(array $data, array $measurements): int {
         $orderId = (int)$db->lastInsertId();
     }
 
-    $existing = $db->prepare("SELECT id FROM measurements WHERE order_id=?")->execute([$orderId]);
-    $existing = $db->prepare("SELECT id FROM measurements WHERE order_id=?");
-    $existing->execute([$orderId]);
-    $existingM = $existing->fetch();
-
+    // Upsert measurements.
     $mFields = ['shirt_length','sleeve','shoulder','collar','chest','waist','hip',
                 'shalwar_length','shalwar_bottom','shalwar_waist','cuff',
                 'trouser_length','trouser_bottom','front_style','detail'];
     $mVals = [];
     foreach ($mFields as $f) $mVals[$f] = $measurements[$f] ?? null;
+
+    $checkM = $db->prepare("SELECT id FROM measurements WHERE order_id=?");
+    $checkM->execute([$orderId]);
+    $existingM = $checkM->fetch();
 
     if ($existingM) {
         $sets = implode(', ', array_map(fn($f) => "$f=?", $mFields));
@@ -122,12 +138,31 @@ function saveOrder(array $data, array $measurements): int {
            ->execute([$orderId, ...array_values($mVals)]);
     }
 
-    if ($data['cloth_source'] === 'shop' && !empty($data['stock_item_id']) && !empty($data['meters_used'])) {
-        $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-           ->execute([$data['meters_used'], $data['stock_item_id']]);
-        if (empty($data['id'])) {
+    // Stock reconciliation.
+    // For new orders: simply deduct the meters from the chosen stock item.
+    // For edits: restore old stock usage first, then apply the new usage, so
+    //            net inventory remains correct regardless of what changed.
+    $newStockItemId = $data['cloth_source'] === 'shop' ? (int)($data['stock_item_id'] ?? 0) : 0;
+    $newMetersUsed  = $data['cloth_source'] === 'shop' ? (float)($data['meters_used'] ?? 0) : 0.0;
+
+    if ($isEdit) {
+        // Restore old stock if there was any shop usage.
+        if ($oldClothSource === 'shop' && $oldStockItemId && $oldMetersUsed > 0) {
+            $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+               ->execute([$oldMetersUsed, $oldStockItemId]);
+        }
+        // Apply new stock deduction if shop cloth selected.
+        if ($newStockItemId && $newMetersUsed > 0) {
+            $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+               ->execute([$newMetersUsed, $newStockItemId]);
+        }
+    } else {
+        // New order: deduct and record transaction.
+        if ($newStockItemId && $newMetersUsed > 0) {
+            $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+               ->execute([$newMetersUsed, $newStockItemId]);
             $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,'debit',?,?)")
-               ->execute([$data['stock_item_id'], $orderId, $data['meters_used'], 'Order ' . ($data['order_no'] ?? $orderId)]);
+               ->execute([$newStockItemId, $orderId, $newMetersUsed, 'Order ' . ($data['order_no'] ?? $orderId)]);
         }
     }
 

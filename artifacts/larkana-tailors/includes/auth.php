@@ -38,7 +38,6 @@ function handleLogin(): ?string {
     if (!$username || !$password) return 'Please enter username and password.';
 
     $db = getDB();
-    $user = $db->prepare("SELECT * FROM users WHERE username = ?")->execute([$username]) ? null : null;
     $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
     $user = $stmt->fetch();

@@ -47,7 +47,6 @@
   <div class="stat-box gold">
     <div class="stat-label">Due Today</div>
     <?php
-    $dueToday = getDB()->prepare("SELECT COUNT(*) FROM orders WHERE delivery_date=? AND status!='delivered'")->execute([date('Y-m-d')]);
     $dueToday = getDB()->prepare("SELECT COUNT(*) FROM orders WHERE delivery_date=? AND status!='delivered'");
     $dueToday->execute([date('Y-m-d')]);
     $dueTodayCount = $dueToday->fetchColumn();
