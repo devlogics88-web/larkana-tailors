@@ -137,7 +137,7 @@ if ($action) {
                 $order['stitch_type']  = $_POST['stitch_type']  ?? $order['stitch_type'];
                 $order['cloth_source'] = $_POST['cloth_source'] ?? $order['cloth_source'];
                 $order['stock_item_id']= (int)($_POST['stock_item_id'] ?? 0) ?: $order['stock_item_id'];
-                $order['meters_used']  = $_POST['meters_used']  !== null ? (float)$_POST['meters_used'] : $order['meters_used'];
+                $order['meters_used']  = isset($_POST['meters_used']) ? (float)$_POST['meters_used'] : $order['meters_used'];
                 $order['brand_name']   = $_POST['brand_name']   ?? $order['brand_name'];
                 $order['total_price']  = (float)($_POST['total_price']  ?? $order['total_price']);
                 $order['advance_paid'] = (float)($_POST['advance_paid'] ?? $order['advance_paid']);
