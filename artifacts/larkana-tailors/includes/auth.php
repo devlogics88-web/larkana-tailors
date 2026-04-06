@@ -43,20 +43,34 @@ function handleLogin(): ?string {
     $password = $_POST['password'] ?? '';
     if (!$username || !$password) return 'Please enter username and password.';
 
+    // Simple session-based throttle: 5 failed attempts → 30 s lockout.
+    $attempts  = $_SESSION['login_attempts'] ?? 0;
+    $lastFail  = $_SESSION['login_last_fail'] ?? 0;
+    if ($attempts >= 5 && (time() - $lastFail) < 30) {
+        $wait = 30 - (time() - $lastFail);
+        return "Too many failed attempts. Please wait $wait second(s) and try again.";
+    }
+    if ((time() - $lastFail) >= 30) {
+        $attempts = 0;
+    }
+
     $db = getDB();
     $stmt = $db->prepare("SELECT * FROM users WHERE username = ?");
     $stmt->execute([$username]);
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password_hash'])) {
+        $_SESSION['login_attempts'] = $attempts + 1;
+        $_SESSION['login_last_fail'] = time();
         return 'Invalid username or password.';
     }
     session_regenerate_id(true);
-    $_SESSION['user_id']    = $user['id'];
-    $_SESSION['username']   = $user['username'];
-    $_SESSION['role']       = $user['role'];
-    $_SESSION['full_name']  = $user['full_name'];
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+    $_SESSION['user_id']       = $user['id'];
+    $_SESSION['username']      = $user['username'];
+    $_SESSION['role']          = $user['role'];
+    $_SESSION['full_name']     = $user['full_name'];
+    $_SESSION['csrf_token']    = bin2hex(random_bytes(16));
+    unset($_SESSION['login_attempts'], $_SESSION['login_last_fail']);
     // Role-differentiated landing: workers go straight to the orders list.
     header($user['role'] === 'admin' ? 'Location: ?page=dashboard' : 'Location: ?page=orders');
     exit;
