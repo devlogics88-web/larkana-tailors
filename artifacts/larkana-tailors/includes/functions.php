@@ -23,10 +23,18 @@ function formatDate(?string $d): string {
 }
 
 function searchCustomers(string $query): array {
-    $db = getDB();
-    $q = '%' . $query . '%';
-    $stmt = $db->prepare("SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY name LIMIT 20");
-    $stmt->execute([$q, $q]);
+    $db   = getDB();
+    $like = '%' . $query . '%';
+    // Include order_count in one query to avoid N+1 in the customer list view.
+    $stmt = $db->prepare("
+        SELECT c.*, COALESCE(oc.cnt, 0) AS order_count
+        FROM customers c
+        LEFT JOIN (SELECT customer_id, COUNT(*) AS cnt FROM orders GROUP BY customer_id) oc
+            ON oc.customer_id = c.id
+        WHERE c.name LIKE ? OR c.phone LIKE ?
+        ORDER BY c.name LIMIT 20
+    ");
+    $stmt->execute([$like, $like]);
     return $stmt->fetchAll();
 }
 
@@ -238,6 +246,10 @@ function getStockItems(): array {
 function saveStockItem(array $data): void {
     $db = getDB();
     if (!empty($data['id'])) {
+        // available_meters is intentionally editable by admins as a manual override
+        // (e.g. to correct physical stock counts after cutting wastage or theft).
+        // Deductions and restorations driven by orders are handled separately via
+        // saveOrder() transactions to preserve the audit trail in stock_transactions.
         $db->prepare("UPDATE stock_items SET brand_name=?, cloth_type=?, total_meters=?, available_meters=?, cost_per_meter=?, sell_per_meter=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
            ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $data['id']]);
     } else {
@@ -262,7 +274,7 @@ function getDashboardStats(): array {
     $stats['total_advance'] = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
     $stats['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
     $stats['recent_orders'] = $db->query("
-        SELECT o.*, c.name as customer_name FROM orders o
+        SELECT o.*, c.name as customer_name, c.phone as customer_phone FROM orders o
         LEFT JOIN customers c ON c.id=o.customer_id
         ORDER BY o.created_at DESC LIMIT 10
     ")->fetchAll();

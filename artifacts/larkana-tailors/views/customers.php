@@ -37,19 +37,14 @@ $customers = $search ? searchCustomers($search) : [];
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($customers as $c):
-          $db = getDB();
-          $stmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE customer_id=?");
-          $stmt->execute([$c['id']]);
-          $orderCount = $stmt->fetchColumn();
-        ?>
+        <?php foreach ($customers as $c): ?>
         <tr>
           <td><?= h($c['id']) ?></td>
           <td class="bold"><?= h($c['name']) ?></td>
           <td><?= h($c['phone'] ?? '-') ?></td>
           <td><?= h($c['address'] ?? '-') ?></td>
           <td><?= formatDate($c['created_at']) ?></td>
-          <td class="bold text-center"><?= h($orderCount) ?></td>
+          <td class="bold text-center"><?= h($c['order_count'] ?? 0) ?></td>
           <td>
             <a href="?page=customer_orders&customer_id=<?= h($c['id']) ?>" class="btn btn-info btn-sm">View Orders</a>
             <a href="?page=order_new&prefill_customer=<?= h($c['id']) ?>" class="btn btn-success btn-sm">New Order</a>
