@@ -1,0 +1,13 @@
+kind = "web"
+previewPath = "/"
+title = "Larkana Tailors"
+version = "1.0.0"
+id = "LarkanaTailors001"
+
+[[services]]
+localPort = 8000
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "php -S 0.0.0.0:8000 /home/runner/workspace/artifacts/larkana-tailors/router.php"
