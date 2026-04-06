@@ -45,10 +45,12 @@ function handleLogin(): ?string {
     if (!$user || !password_verify($password, $user['password_hash'])) {
         return 'Invalid username or password.';
     }
-    $_SESSION['user_id']   = $user['id'];
-    $_SESSION['username']  = $user['username'];
-    $_SESSION['role']      = $user['role'];
-    $_SESSION['full_name'] = $user['full_name'];
+    session_regenerate_id(true);
+    $_SESSION['user_id']    = $user['id'];
+    $_SESSION['username']   = $user['username'];
+    $_SESSION['role']       = $user['role'];
+    $_SESSION['full_name']  = $user['full_name'];
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
     header('Location: ?page=dashboard');
     exit;
 }
@@ -67,8 +69,10 @@ function getCsrf(): string {
 }
 
 function verifyCsrf(): void {
-    $provided = $_POST['csrf'] ?? $_GET['csrf'] ?? '';
-    if (!hash_equals((string)($_SESSION['csrf_token'] ?? ''), $provided)) {
+    $sessionToken = $_SESSION['csrf_token'] ?? '';
+    $provided     = $_POST['csrf'] ?? $_GET['csrf'] ?? '';
+    // Both values must be non-empty; empty == empty would bypass protection.
+    if (!$sessionToken || !$provided || !hash_equals($sessionToken, $provided)) {
         http_response_code(403);
         die('<p style="font-family:Arial;padding:20px;color:#c62828;">Invalid or expired form token. Please go back and try again.</p>');
     }
