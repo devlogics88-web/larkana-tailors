@@ -32,10 +32,10 @@ $data = getReportData();
   <div class="card-body">
     <table>
       <tr><th style="width:60%;">Description</th><th>Amount</th></tr>
-      <tr><td>Total Sales (all orders)</td><td class="bold green"><?= formatMoney($data['total_sales']) ?></td></tr>
-      <tr><td>Stock Used Cost (cloth cost for shop orders)</td><td class="bold red"><?= formatMoney($data['stock_cost']) ?></td></tr>
+      <tr><td>Total Revenue (all orders, all cloth sources)</td><td class="bold green"><?= formatMoney($data['total_sales']) ?></td></tr>
+      <tr><td>Shop Cloth Cost (cost of cloth used from stock)</td><td class="bold red"><?= formatMoney($data['stock_cost']) ?></td></tr>
       <tr style="background:#e8f5e9;">
-        <td class="bold">Estimated Gross Profit</td>
+        <td class="bold">Estimated Gross Profit <span style="font-weight:normal;font-size:11px;">(Revenue &minus; Shop Cloth Cost)</span></td>
         <td class="bold <?= $data['estimated_profit'] >= 0 ? 'green' : 'red' ?>" style="font-size:14px;">
           <?= formatMoney($data['estimated_profit']) ?>
           <?= $data['estimated_profit'] >= 0 ? ' &#9650;' : ' &#9660;' ?>

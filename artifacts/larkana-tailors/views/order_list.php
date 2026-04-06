@@ -53,7 +53,7 @@ $orders = getOrders(['search' => $search, 'status' => $status]);
           <td><?= h($o['customer_phone'] ?? '') ?></td>
           <td><?= h($o['suit_type'] ?? '-') ?></td>
           <td><?= formatDate($o['order_date']) ?></td>
-          <td <?= strtotime($o['delivery_date'] ?? '') < time() && ($o['status'] ?? '') === 'pending' ? 'style="color:#c62828;font-weight:bold;"' : '' ?>>
+          <td <?= !empty($o['delivery_date']) && strtotime($o['delivery_date']) < time() && ($o['status'] ?? '') === 'pending' ? 'style="color:#c62828;font-weight:bold;"' : '' ?>>
             <?= formatDate($o['delivery_date']) ?>
           </td>
           <?php if (isAdmin()): ?>

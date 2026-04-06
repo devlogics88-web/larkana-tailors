@@ -102,11 +102,51 @@ if ($action) {
             } catch (PDOException $e) {
                 $error = 'A database error occurred. Please try again.';
             }
-            // Fall through to show order form with error
+            // Fall through to show order form with error.
+            // Repopulate from POST so entered data is not lost.
             requireLogin();
             $orderId = (int)($_POST['order_id'] ?? 0);
             $order   = $orderId ? getOrder($orderId) : null;
-            if (!$order) $order = [];
+            if (!$order) {
+                // Preserve submitted POST values so the operator does not
+                // lose data on validation failures (e.g. insufficient stock).
+                $order = [
+                    'id'             => null,
+                    'customer_id'    => (int)($_POST['customer_id'] ?? 0),
+                    'order_date'     => $_POST['order_date'] ?? date('Y-m-d'),
+                    'delivery_date'  => $_POST['delivery_date'] ?? '',
+                    'suit_type'      => $_POST['suit_type'] ?? '',
+                    'stitch_type'    => $_POST['stitch_type'] ?? '',
+                    'cloth_source'   => $_POST['cloth_source'] ?? 'self',
+                    'stock_item_id'  => (int)($_POST['stock_item_id'] ?? 0) ?: null,
+                    'meters_used'    => (float)($_POST['meters_used'] ?? 0) ?: null,
+                    'brand_name'     => $_POST['brand_name'] ?? '',
+                    'total_price'    => (float)($_POST['total_price'] ?? 0),
+                    'advance_paid'   => (float)($_POST['advance_paid'] ?? 0),
+                    'remaining'      => (float)($_POST['remaining'] ?? 0),
+                    'status'         => $_POST['status'] ?? 'pending',
+                    'notes'          => trim($_POST['notes'] ?? ''),
+                    'customer_name'  => '',
+                    'measurements'   => [
+                        'shirt_length'   => $_POST['m_shirt_length'] ?? null,
+                        'sleeve'         => $_POST['m_sleeve'] ?? null,
+                        'arm'            => $_POST['m_arm'] ?? null,
+                        'shoulder'       => $_POST['m_shoulder'] ?? null,
+                        'collar'         => $_POST['m_collar'] ?? null,
+                        'chest'          => $_POST['m_chest'] ?? null,
+                        'waist'          => $_POST['m_waist'] ?? null,
+                        'hip'            => $_POST['m_hip'] ?? null,
+                        'shalwar_length' => $_POST['m_shalwar_length'] ?? null,
+                        'shalwar_bottom' => $_POST['m_shalwar_bottom'] ?? null,
+                        'shalwar_waist'  => $_POST['m_shalwar_waist'] ?? null,
+                        'cuff'           => $_POST['m_cuff'] ?? null,
+                        'trouser_length' => $_POST['m_trouser_length'] ?? null,
+                        'trouser_bottom' => $_POST['m_trouser_bottom'] ?? null,
+                        'front_style'    => $_POST['m_front_style'] ?? null,
+                        'detail'         => $_POST['m_detail'] ?? null,
+                    ],
+                ];
+            }
             require __DIR__ . '/includes/header.php';
             require __DIR__ . '/views/order_form.php';
             require __DIR__ . '/includes/footer.php';
