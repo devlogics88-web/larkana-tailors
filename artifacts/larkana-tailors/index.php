@@ -74,7 +74,7 @@ if ($action) {
                     'total_price'   => (float)($_POST['total_price'] ?? 0),
                     'advance_paid'  => (float)($_POST['advance_paid'] ?? 0),
                     'remaining'     => (float)($_POST['remaining'] ?? 0),
-                    'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered'], true) ? $_POST['status'] : 'pending',
+                    'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
                     'notes'         => trim($_POST['notes'] ?? ''),
                 ];
 
@@ -146,7 +146,7 @@ if ($action) {
                 $order['total_price']  = (float)($_POST['total_price']  ?? $order['total_price']);
                 $order['advance_paid'] = (float)($_POST['advance_paid'] ?? $order['advance_paid']);
                 $order['remaining']    = (float)($_POST['remaining']    ?? $order['remaining']);
-                $order['status']       = in_array($_POST['status'] ?? '', ['pending','ready','delivered'], true) ? $_POST['status'] : $order['status'];
+                $order['status']       = in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : $order['status'];
                 $order['notes']        = trim($_POST['notes']   ?? $order['notes']);
                 $order['measurements'] = array_merge($order['measurements'] ?? [], $postMeasurements);
             } elseif (!$order) {
@@ -165,7 +165,7 @@ if ($action) {
                     'total_price'    => (float)($_POST['total_price'] ?? 0),
                     'advance_paid'   => (float)($_POST['advance_paid'] ?? 0),
                     'remaining'      => (float)($_POST['remaining'] ?? 0),
-                    'status'         => in_array($_POST['status'] ?? '', ['pending','ready','delivered'], true) ? $_POST['status'] : 'pending',
+                    'status'         => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
                     'notes'          => trim($_POST['notes'] ?? ''),
                     'customer_name'   => (function(int $cid): string {
                         if (!$cid) return '';
