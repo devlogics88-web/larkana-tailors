@@ -301,8 +301,7 @@ function getReportData(): array {
         WHERE o.cloth_source = 'shop' AND o.meters_used IS NOT NULL
     ")->fetchColumn();
 
-    $shopOrders = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders WHERE cloth_source='shop'")->fetchColumn();
-    $data['estimated_profit'] = $shopOrders - $data['stock_cost'];
+    $data['estimated_profit'] = $data['total_sales'] - $data['stock_cost'];
 
     $data['by_status'] = $db->query("
         SELECT status, COUNT(*) as cnt, COALESCE(SUM(total_price),0) as total
