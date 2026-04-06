@@ -74,8 +74,10 @@
           <th>Phone</th>
           <th>Date</th>
           <th>Delivery</th>
+          <?php if (isAdmin()): ?>
           <th>Amount</th>
           <th>Advance</th>
+          <?php endif; ?>
           <th>Status</th>
           <th>Action</th>
         </tr>
@@ -88,8 +90,10 @@
           <td><?= h($o['customer_phone'] ?? '') ?></td>
           <td><?= formatDate($o['order_date']) ?></td>
           <td><?= formatDate($o['delivery_date']) ?></td>
+          <?php if (isAdmin()): ?>
           <td class="bold"><?= formatMoney($o['total_price']) ?></td>
           <td><?= formatMoney($o['advance_paid']) ?></td>
+          <?php endif; ?>
           <td><span class="badge badge-<?= h($o['status']) ?>"><?= h(ucfirst($o['status'])) ?></span></td>
           <td>
             <a href="?page=order_edit&id=<?= h($o['id']) ?>" class="btn btn-info btn-sm">Edit</a>
