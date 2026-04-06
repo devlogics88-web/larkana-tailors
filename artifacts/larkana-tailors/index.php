@@ -207,7 +207,14 @@ if ($action) {
             header('Content-Type: application/json');
             $q = trim($_GET['q'] ?? '');
             if (strlen($q) < 2) { echo '[]'; exit; }
-            echo json_encode(searchCustomers($q));
+            $rows = searchCustomers($q);
+            $slim = array_map(fn($c) => [
+                'id'      => $c['id'],
+                'name'    => $c['name'],
+                'phone'   => $c['phone'],
+                'address' => $c['address'],
+            ], $rows);
+            echo json_encode($slim);
             exit;
 
         case 'save_stock':
@@ -229,7 +236,7 @@ if ($action) {
                 if ($data['available_meters'] < 0) throw new RuntimeException('Available meters cannot be negative.');
                 if ($data['cost_per_meter'] < 0) throw new RuntimeException('Cost per meter cannot be negative.');
                 if ($data['sell_per_meter'] !== null && $data['sell_per_meter'] < 0) throw new RuntimeException('Selling price per meter cannot be negative.');
-                if ($data['id'] && $data['available_meters'] > $data['total_meters']) {
+                if ($data['available_meters'] > $data['total_meters']) {
                     throw new RuntimeException('Available meters cannot exceed total meters.');
                 }
                 saveStockItem($data);
