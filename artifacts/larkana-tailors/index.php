@@ -312,13 +312,18 @@ if ($action) {
             verifyCsrf();
             $id = (int)($_POST['id'] ?? 0);
             if ($id && $id !== (int)$_SESSION['user_id']) {
-                $db = getDB();
-                $stmt = $db->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
-                $stmt->execute([$id]);
-                if ($stmt->rowCount() > 0) {
-                    flash('worker_ok', 'Worker deleted.');
-                } else {
-                    flash('worker_err', 'Worker not found or cannot be deleted.');
+                try {
+                    $db = getDB();
+                    $stmt = $db->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
+                    $stmt->execute([$id]);
+                    if ($stmt->rowCount() > 0) {
+                        flash('worker_ok', 'Worker deleted.');
+                    } else {
+                        flash('worker_err', 'Worker not found or cannot be deleted.');
+                    }
+                } catch (PDOException $e) {
+                    // FK constraint: worker still referenced by existing orders.
+                    flash('worker_err', 'Cannot delete this worker — they have existing orders on record. Remove their orders first or keep the account.');
                 }
             } else {
                 flash('worker_err', 'Cannot delete this account.');
