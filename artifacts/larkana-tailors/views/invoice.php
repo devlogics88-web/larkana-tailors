@@ -117,14 +117,6 @@ body { background: #fff; margin: 0; padding: 10px; }
   <?php endif; ?>
 
   <?php if (!$isLabour): ?>
-  <?php
-  // Policy: pricing (Total Amount / Advance / Remaining) is intentionally shown
-  // on the customer copy for ALL roles, including workers. Workers at the counter
-  // need these figures to collect payment and hand the receipt to customers.
-  // The labour copy (stitching slip) never shows pricing data.
-  // Financial analysis (profit/loss, aggregates) is restricted to Admin only
-  // via the Reports page and dashboard columns.
-  ?>
   <div class="inv-divider"></div>
   <div class="inv-section" style="font-size:13px;">
     <label>Total Amount:</label> <strong style="font-size:15px;"><?= formatMoney($order['total_price']) ?></strong>

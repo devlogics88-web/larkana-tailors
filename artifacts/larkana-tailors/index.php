@@ -282,8 +282,7 @@ if ($action) {
                     if ($oRow && $oRow['cloth_source'] === 'shop' && $oRow['stock_item_id'] && $oRow['meters_used'] > 0) {
                         $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                            ->execute([$oRow['meters_used'], $oRow['stock_item_id']]);
-                        // Compensating audit row: record the restoration in the transaction log.
-                        $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, type, meters, notes) VALUES (?,?,?,?,?)")
+                        $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,?,?,?)")
                            ->execute([$oRow['stock_item_id'], null, 'restore', $oRow['meters_used'], "Order #$id deleted — meters restored"]);
                     }
                     // Remove dependent rows first (FK constraint).
