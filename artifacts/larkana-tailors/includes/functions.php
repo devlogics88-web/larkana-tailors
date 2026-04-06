@@ -146,6 +146,19 @@ function saveOrder(array $data, array $measurements): int {
     $newMetersUsed  = $data['cloth_source'] === 'shop' ? (float)($data['meters_used'] ?? 0) : 0.0;
 
     if ($isEdit) {
+        // Validate that the new item has enough stock after the old usage is restored.
+        if ($newStockItemId && $newMetersUsed > 0) {
+            $availStmt = $db->prepare("SELECT available_meters FROM stock_items WHERE id=?");
+            $availStmt->execute([$newStockItemId]);
+            $availNow = (float)($availStmt->fetchColumn() ?? 0);
+            // If same stock item, old meters will be restored before the new deduction.
+            $afterRestore = $availNow + ($oldClothSource === 'shop' && $oldStockItemId === $newStockItemId ? $oldMetersUsed : 0);
+            if ($afterRestore < $newMetersUsed) {
+                throw new RuntimeException(
+                    "Not enough cloth in stock: {$afterRestore}m available, {$newMetersUsed}m requested."
+                );
+            }
+        }
         // Restore old stock and record a credit transaction to keep reports accurate.
         if ($oldClothSource === 'shop' && $oldStockItemId && $oldMetersUsed > 0) {
             $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
@@ -161,8 +174,16 @@ function saveOrder(array $data, array $measurements): int {
                ->execute([$newStockItemId, $orderId, $newMetersUsed, 'Edit update for order #' . $orderId]);
         }
     } else {
-        // New order: deduct and record transaction.
+        // New order: validate availability then deduct and record transaction.
         if ($newStockItemId && $newMetersUsed > 0) {
+            $availStmt = $db->prepare("SELECT available_meters FROM stock_items WHERE id=?");
+            $availStmt->execute([$newStockItemId]);
+            $availNow = (float)($availStmt->fetchColumn() ?? 0);
+            if ($availNow < $newMetersUsed) {
+                throw new RuntimeException(
+                    "Not enough cloth in stock: {$availNow}m available, {$newMetersUsed}m requested."
+                );
+            }
             $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                ->execute([$newMetersUsed, $newStockItemId]);
             $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,'debit',?,?)")
@@ -243,11 +264,12 @@ function getReportData(): array {
     $data['total_advance']   = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
     $data['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
 
+    // Calculate cloth cost from current order data so edits never overstate cost.
     $data['stock_cost'] = $db->query("
-        SELECT COALESCE(SUM(st.meters * si.cost_per_meter),0)
-        FROM stock_transactions st
-        JOIN stock_items si ON si.id=st.stock_item_id
-        WHERE st.transaction_type='debit'
+        SELECT COALESCE(SUM(o.meters_used * si.cost_per_meter), 0)
+        FROM orders o
+        JOIN stock_items si ON si.id = o.stock_item_id
+        WHERE o.cloth_source = 'shop' AND o.meters_used IS NOT NULL
     ")->fetchColumn();
 
     $shopOrders = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders WHERE cloth_source='shop'")->fetchColumn();
