@@ -47,9 +47,10 @@ if ($action) {
                 $customerId = (int)($_POST['customer_id'] ?? 0);
 
                 // Handle new customer creation
-                if (!$customerId && !empty($_POST['new_name'])) {
+                $newName = trim($_POST['new_name'] ?? '');
+                if (!$customerId && $newName !== '') {
                     $customerId = saveCustomer([
-                        'name'    => trim($_POST['new_name'] ?? ''),
+                        'name'    => $newName,
                         'phone'   => trim($_POST['new_phone'] ?? ''),
                         'address' => trim($_POST['new_address'] ?? ''),
                         'notes'   => '',
@@ -102,7 +103,7 @@ if ($action) {
                 header("Location: ?page=order_edit&id=$orderId&saved=1");
                 exit;
 
-            } catch (RuntimeException $e) {
+            } catch (RuntimeException|\InvalidArgumentException $e) {
                 $error = $e->getMessage();
             } catch (PDOException $e) {
                 $error = 'A database error occurred. Please try again.';
