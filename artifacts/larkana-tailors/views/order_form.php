@@ -1,5 +1,7 @@
 <?php
-$isEdit = !empty($order);
+$isEdit    = isset($order['id']);
+$isPrefill = !$isEdit && !empty($order['prefill_customer']);
+$prefillCustomer = $isPrefill ? $order['prefill_customer'] : null;
 $orderId = $isEdit ? $order['id'] : null;
 $m = $isEdit ? ($order['measurements'] ?? []) : [];
 $stocks = getStockItems();
@@ -18,12 +20,14 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
 <?php if ($isEdit): ?>
 <input type="hidden" name="order_id" value="<?= h($orderId) ?>">
 <input type="hidden" name="customer_id" value="<?= h($order['customer_id']) ?>">
+<?php elseif ($isPrefill): ?>
+<input type="hidden" name="customer_id" id="customer_id" value="<?= h($prefillCustomer['id']) ?>">
 <?php else: ?>
 <input type="hidden" name="customer_id" id="customer_id" value="">
 <?php endif; ?>
 
 <!-- CUSTOMER SECTION -->
-<?php if (!$isEdit): ?>
+<?php if (!$isEdit && !$isPrefill): ?>
 <div class="card">
   <div class="card-head">&#128101; Customer (کسٹمر) &mdash; Search or Add New</div>
   <div class="card-body">
@@ -54,6 +58,18 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
           <input type="text" name="new_address" placeholder="Address / City">
         </div>
       </div>
+    </div>
+  </div>
+</div>
+<?php elseif ($isPrefill): ?>
+<div class="card">
+  <div class="card-head">&#128101; Customer (کسٹمر)</div>
+  <div class="card-body">
+    <div class="customer-panel" style="display:block;">
+      <strong>&#10003; <?= h($prefillCustomer['name']) ?></strong>
+      <?= !empty($prefillCustomer['phone']) ? ' &mdash; ' . h($prefillCustomer['phone']) : '' ?>
+      <?= !empty($prefillCustomer['address']) ? ' &mdash; ' . h($prefillCustomer['address']) : '' ?>
+      <a href="?page=customers" style="margin-left:10px; color:#c62828; font-size:11px;">[Change Customer]</a>
     </div>
   </div>
 </div>
@@ -161,44 +177,48 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
       <tr>
         <td class="label-cell">Shirt Length (لمبائی قمیص)</td>
         <td><input type="text" name="m_shirt_length" value="<?= h($m['shirt_length'] ?? '') ?>" placeholder="e.g. 45½"></td>
-        <td class="label-cell">Sleeve / Arm (بازو)</td>
+        <td class="label-cell">Sleeve (آستین)</td>
         <td><input type="text" name="m_sleeve" value="<?= h($m['sleeve'] ?? '') ?>" placeholder="e.g. 25½"></td>
       </tr>
       <tr>
+        <td class="label-cell">Arm / Bazu (بازو)</td>
+        <td><input type="text" name="m_arm" value="<?= h($m['arm'] ?? '') ?>" placeholder="e.g. 14½"></td>
         <td class="label-cell">Shoulder (تیرہ)</td>
         <td><input type="text" name="m_shoulder" value="<?= h($m['shoulder'] ?? '') ?>" placeholder="e.g. 19½"></td>
+      </tr>
+      <tr>
         <td class="label-cell">Collar / Neck (گلا)</td>
         <td><input type="text" name="m_collar" value="<?= h($m['collar'] ?? '') ?>" placeholder="e.g. 18"></td>
-      </tr>
-      <tr>
         <td class="label-cell">Chest (چپٹ)</td>
         <td><input type="text" name="m_chest" value="<?= h($m['chest'] ?? '') ?>" placeholder="e.g. 28"></td>
+      </tr>
+      <tr>
         <td class="label-cell">Waist (کمر)</td>
         <td><input type="text" name="m_waist" value="<?= h($m['waist'] ?? '') ?>" placeholder="e.g. 32"></td>
-      </tr>
-      <tr>
         <td class="label-cell">Hip / Seat (گیرہ)</td>
         <td><input type="text" name="m_hip" value="<?= h($m['hip'] ?? '') ?>" placeholder="e.g. 30½"></td>
+      </tr>
+      <tr>
         <td class="label-cell">Cuff / Karnok (کارنوک)</td>
         <td><input type="text" name="m_cuff" value="<?= h($m['cuff'] ?? '') ?>" placeholder="e.g. 2½"></td>
-      </tr>
-      <tr>
         <td class="label-cell">Shalwar Length (شلوار لمبائی)</td>
         <td><input type="text" name="m_shalwar_length" value="<?= h($m['shalwar_length'] ?? '') ?>" placeholder="e.g. 40"></td>
+      </tr>
+      <tr>
         <td class="label-cell">Shalwar Bottom / Pancha (پانچہ)</td>
         <td><input type="text" name="m_shalwar_bottom" value="<?= h($m['shalwar_bottom'] ?? '') ?>" placeholder="e.g. 9"></td>
-      </tr>
-      <tr>
         <td class="label-cell">Shalwar Waist (شلوار گیرہ)</td>
         <td><input type="text" name="m_shalwar_waist" value="<?= h($m['shalwar_waist'] ?? '') ?>" placeholder="e.g. 22,18"></td>
-        <td class="label-cell">Trouser Length (ٹراؤزر لمبائی)</td>
-        <td><input type="text" name="m_trouser_length" value="<?= h($m['trouser_length'] ?? '') ?>" placeholder="e.g. 40"></td>
       </tr>
       <tr>
+        <td class="label-cell">Trouser Length (ٹراؤزر لمبائی)</td>
+        <td><input type="text" name="m_trouser_length" value="<?= h($m['trouser_length'] ?? '') ?>" placeholder="e.g. 40"></td>
         <td class="label-cell">Trouser Bottom (ٹراؤزر پائنچہ)</td>
         <td><input type="text" name="m_trouser_bottom" value="<?= h($m['trouser_bottom'] ?? '') ?>" placeholder="e.g. 8"></td>
+      </tr>
+      <tr>
         <td class="label-cell">Front Style (فرنٹ)</td>
-        <td>
+        <td colspan="3">
           <select name="m_front_style" style="width:100%;border:none;padding:3px 4px;font-size:12px;">
             <option value="">-- Select --</option>
             <?php foreach (['Main Full','Main Half','Cuff','Gera Gores','Simple','Fancy'] as $fs): ?>

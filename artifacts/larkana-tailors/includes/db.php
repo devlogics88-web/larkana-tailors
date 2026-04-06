@@ -82,6 +82,7 @@ function initSchema(PDO $pdo): void {
             order_id INTEGER UNIQUE NOT NULL,
             shirt_length REAL,
             sleeve REAL,
+            arm REAL,
             shoulder REAL,
             collar REAL,
             chest REAL,
@@ -110,6 +111,13 @@ function initSchema(PDO $pdo): void {
             FOREIGN KEY (order_id) REFERENCES orders(id)
         );
     ");
+
+    // Migrate existing databases: add arm column if not present.
+    try {
+        $pdo->exec("ALTER TABLE measurements ADD COLUMN arm REAL");
+    } catch (PDOException $ignored) {
+        // Column already exists — safe to ignore.
+    }
 
     $admin = $pdo->query("SELECT COUNT(*) FROM users WHERE username='larkana'")->fetchColumn();
     if (!$admin) {

@@ -74,7 +74,8 @@ body { background: #fff; margin: 0; padding: 10px; }
     <?php
     $fields = [
       'm_shirt_length'  => ['Shirt Length', 'لمبائی قمیص', 'shirt_length'],
-      'm_sleeve'        => ['Sleeve', 'بازو', 'sleeve'],
+      'm_sleeve'        => ['Sleeve', 'آستین', 'sleeve'],
+      'm_arm'           => ['Arm', 'بازو', 'arm'],
       'm_shoulder'      => ['Shoulder', 'تیرہ', 'shoulder'],
       'm_collar'        => ['Collar', 'گلا', 'collar'],
       'm_chest'         => ['Chest', 'چپٹ', 'chest'],

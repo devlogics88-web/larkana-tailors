@@ -75,6 +75,7 @@ if ($action) {
                 $measurements = [
                     'shirt_length'   => $_POST['m_shirt_length'] ?? null,
                     'sleeve'         => $_POST['m_sleeve'] ?? null,
+                    'arm'            => $_POST['m_arm'] ?? null,
                     'shoulder'       => $_POST['m_shoulder'] ?? null,
                     'collar'         => $_POST['m_collar'] ?? null,
                     'chest'          => $_POST['m_chest'] ?? null,

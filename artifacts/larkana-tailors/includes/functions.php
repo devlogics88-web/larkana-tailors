@@ -117,7 +117,7 @@ function saveOrder(array $data, array $measurements): int {
     }
 
     // Upsert measurements.
-    $mFields = ['shirt_length','sleeve','shoulder','collar','chest','waist','hip',
+    $mFields = ['shirt_length','sleeve','arm','shoulder','collar','chest','waist','hip',
                 'shalwar_length','shalwar_bottom','shalwar_waist','cuff',
                 'trouser_length','trouser_bottom','front_style','detail'];
     $mVals = [];
