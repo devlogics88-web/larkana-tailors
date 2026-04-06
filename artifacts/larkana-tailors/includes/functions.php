@@ -146,15 +146,19 @@ function saveOrder(array $data, array $measurements): int {
     $newMetersUsed  = $data['cloth_source'] === 'shop' ? (float)($data['meters_used'] ?? 0) : 0.0;
 
     if ($isEdit) {
-        // Restore old stock if there was any shop usage.
+        // Restore old stock and record a credit transaction to keep reports accurate.
         if ($oldClothSource === 'shop' && $oldStockItemId && $oldMetersUsed > 0) {
             $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                ->execute([$oldMetersUsed, $oldStockItemId]);
+            $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,'credit',?,?)")
+               ->execute([$oldStockItemId, $orderId, $oldMetersUsed, 'Edit reversal for order #' . $orderId]);
         }
-        // Apply new stock deduction if shop cloth selected.
+        // Apply new deduction and record a debit transaction.
         if ($newStockItemId && $newMetersUsed > 0) {
             $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                ->execute([$newMetersUsed, $newStockItemId]);
+            $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,'debit',?,?)")
+               ->execute([$newStockItemId, $orderId, $newMetersUsed, 'Edit update for order #' . $orderId]);
         }
     } else {
         // New order: deduct and record transaction.

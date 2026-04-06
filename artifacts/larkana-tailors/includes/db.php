@@ -121,6 +121,7 @@ function initSchema(PDO $pdo): void {
 
 function generateOrderNo(): string {
     $db = getDB();
-    $count = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-    return 'LT-' . str_pad($count + 1, 5, '0', STR_PAD_LEFT);
+    // Use MAX to stay collision-free even after order deletions.
+    $maxNo = $db->query("SELECT MAX(CAST(SUBSTR(order_no, 4) AS INTEGER)) FROM orders WHERE order_no LIKE 'LT-%'")->fetchColumn();
+    return 'LT-' . str_pad((int)$maxNo + 1, 5, '0', STR_PAD_LEFT);
 }
