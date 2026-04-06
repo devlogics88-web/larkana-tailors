@@ -97,7 +97,11 @@ $stocks = getStockItems();
             <a href="#" class="btn btn-info btn-sm"
                data-stock="<?= h(json_encode($s, JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_TAG|JSON_HEX_AMP)) ?>"
                onclick="editStockFromData(this);return false;">Edit</a>
-            <a href="?action=delete_stock&id=<?= h($s['id']) ?>&csrf=<?= h(getCsrf()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete stock item: <?= h($s['brand_name']) ?>?')">Del</a>
+            <form method="POST" action="?action=delete_stock" style="display:inline;" onsubmit="return confirmDelete('Delete stock item: <?= h($s['brand_name']) ?>?')">
+              <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+              <input type="hidden" name="id"   value="<?= h($s['id']) ?>">
+              <button type="submit" class="btn btn-danger btn-sm">Del</button>
+            </form>
           </td>
         </tr>
         <?php endforeach; ?>

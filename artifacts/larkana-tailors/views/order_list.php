@@ -67,7 +67,11 @@ $orders = getOrders(['search' => $search, 'status' => $status]);
             <a href="?page=invoice&id=<?= h($o['id']) ?>&type=customer" class="btn btn-primary btn-sm" target="_blank">Inv.</a>
             <a href="?page=invoice&id=<?= h($o['id']) ?>&type=labour" class="btn btn-print btn-sm" target="_blank">Labour</a>
             <?php if (isAdmin()): ?>
-            <a href="?action=delete_order&id=<?= h($o['id']) ?>&csrf=<?= h(getCsrf()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete order <?= h($o['order_no']) ?>?')">Del</a>
+            <form method="POST" action="?action=delete_order" style="display:inline;" onsubmit="return confirmDelete('Delete order <?= h($o['order_no']) ?>?')">
+              <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+              <input type="hidden" name="id"   value="<?= h($o['id']) ?>">
+              <button type="submit" class="btn btn-danger btn-sm">Del</button>
+            </form>
             <?php endif; ?>
           </td>
         </tr>

@@ -163,7 +163,16 @@ if ($action) {
                     'remaining'      => (float)($_POST['remaining'] ?? 0),
                     'status'         => $_POST['status'] ?? 'pending',
                     'notes'          => trim($_POST['notes'] ?? ''),
-                    'customer_name'  => '',
+                    'customer_name'   => (function(int $cid): string {
+                        if (!$cid) return '';
+                        $db = getDB();
+                        $s  = $db->prepare("SELECT name FROM customers WHERE id=?");
+                        $s->execute([$cid]);
+                        return (string)($s->fetchColumn() ?? '');
+                    })((int)($_POST['customer_id'] ?? 0)),
+                    '_post_new_name'  => trim($_POST['new_name']  ?? ''),
+                    '_post_new_phone' => trim($_POST['new_phone'] ?? ''),
+                    '_post_new_addr'  => trim($_POST['new_address'] ?? ''),
                     'measurements'   => [
                         'shirt_length'   => $_POST['m_shirt_length'] ?? null,
                         'sleeve'         => $_POST['m_sleeve'] ?? null,
@@ -224,8 +233,9 @@ if ($action) {
 
         case 'delete_stock':
             requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
             verifyCsrf();
-            $id = (int)($_GET['id'] ?? 0);
+            $id = (int)($_POST['id'] ?? 0);
             if ($id) {
                 try {
                     deleteStockItem($id);
@@ -239,8 +249,9 @@ if ($action) {
 
         case 'delete_order':
             requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=orders'); exit; }
             verifyCsrf();
-            $id = (int)($_GET['id'] ?? 0);
+            $id = (int)($_POST['id'] ?? 0);
             if ($id) {
                 $db = getDB();
                 // Restore stock meters before deleting.
@@ -270,8 +281,9 @@ if ($action) {
 
         case 'delete_worker':
             requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=workers'); exit; }
             verifyCsrf();
-            $id = (int)($_GET['id'] ?? 0);
+            $id = (int)($_POST['id'] ?? 0);
             if ($id && $id !== (int)$_SESSION['user_id']) {
                 $db = getDB();
                 $db->prepare("DELETE FROM users WHERE id=? AND role!='admin'")->execute([$id]);

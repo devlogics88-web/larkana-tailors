@@ -52,7 +52,11 @@ $workers = $db->query("SELECT id, username, role, full_name, created_at FROM use
           <td><?= formatDate($w['created_at']) ?></td>
           <td>
             <?php if ($w['role'] !== 'admin'): ?>
-            <a href="?action=delete_worker&id=<?= h($w['id']) ?>&csrf=<?= h(getCsrf()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete worker: <?= h($w['username']) ?>?')">Del</a>
+            <form method="POST" action="?action=delete_worker" style="display:inline;" onsubmit="return confirmDelete('Delete worker: <?= h($w['username']) ?>?')">
+              <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+              <input type="hidden" name="id"   value="<?= h($w['id']) ?>">
+              <button type="submit" class="btn btn-danger btn-sm">Del</button>
+            </form>
             <?php else: ?>
             <span class="small">Admin</span>
             <?php endif; ?>

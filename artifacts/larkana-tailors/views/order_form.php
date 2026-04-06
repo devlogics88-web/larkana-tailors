@@ -24,7 +24,17 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
 <?php elseif ($isPrefill): ?>
 <input type="hidden" name="customer_id" id="customer_id" value="<?= h($prefillCustomer['id']) ?>">
 <?php else: ?>
-<input type="hidden" name="customer_id" id="customer_id" value="">
+<?php
+// Restore submitted customer state after validation failure.
+$_restoredCustomerId  = (int)($order['customer_id'] ?? 0);
+$_restoredCustomerLbl = h($order['customer_name'] ?? '');
+$_restoredNewName     = h($order['_post_new_name']  ?? '');
+$_restoredNewPhone    = h($order['_post_new_phone'] ?? '');
+$_restoredNewAddr     = h($order['_post_new_addr']  ?? '');
+$_showCustomerPanel   = $_restoredCustomerId > 0;
+$_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
+?>
+<input type="hidden" name="customer_id" id="customer_id" value="<?= $_restoredCustomerId ?: '' ?>">
 <?php endif; ?>
 
 <!-- CUSTOMER SECTION -->
@@ -38,25 +48,25 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
       <button type="button" class="btn" style="background:#546e7a;color:#fff;" onclick="setNewCustomer()">+ New Customer</button>
     </div>
     <div id="customer_results" style="border:1px solid #ddd; max-height:160px; overflow-y:auto; display:none; background:#fff;"></div>
-    <div id="customer_panel" class="customer-panel" style="display:none;">
+    <div id="customer_panel" class="customer-panel" style="display:<?= $_showCustomerPanel ? 'block' : 'none' ?>;">
       <strong>&#10003; Selected Customer:</strong>
-      <span id="customer_name_display"></span>
+      <span id="customer_name_display"><?= $_restoredCustomerLbl ?></span>
       <a href="#" onclick="clearCustomer();return false;" style="margin-left:10px; color:#c62828; font-size:11px;">[Change]</a>
     </div>
-    <div id="new_customer_section" style="display:none;">
+    <div id="new_customer_section" style="display:<?= $_showNewSection ? 'block' : 'none' ?>;">
       <div class="section-divider">New Customer Details (نئے کسٹمر کی معلومات)</div>
       <div class="form-grid">
         <div class="form-group">
           <label>Name (نام) *</label>
-          <input type="text" name="new_name" placeholder="Customer Full Name">
+          <input type="text" name="new_name" placeholder="Customer Full Name" value="<?= $_restoredNewName ?>">
         </div>
         <div class="form-group">
           <label>Phone (فون نمبر)</label>
-          <input type="text" name="new_phone" placeholder="0300-0000000">
+          <input type="text" name="new_phone" placeholder="0300-0000000" value="<?= $_restoredNewPhone ?>">
         </div>
         <div class="form-group">
           <label>Address (پتہ)</label>
-          <input type="text" name="new_address" placeholder="Address / City">
+          <input type="text" name="new_address" placeholder="Address / City" value="<?= $_restoredNewAddr ?>">
         </div>
       </div>
     </div>
