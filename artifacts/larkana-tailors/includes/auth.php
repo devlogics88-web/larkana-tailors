@@ -57,7 +57,8 @@ function handleLogin(): ?string {
     $_SESSION['role']       = $user['role'];
     $_SESSION['full_name']  = $user['full_name'];
     $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
-    header('Location: ?page=dashboard');
+    // Role-differentiated landing: workers go straight to the orders list.
+    header($user['role'] === 'admin' ? 'Location: ?page=dashboard' : 'Location: ?page=orders');
     exit;
 }
 
