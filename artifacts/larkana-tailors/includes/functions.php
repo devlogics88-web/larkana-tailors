@@ -146,20 +146,31 @@ function saveOrder(array $data, array $measurements): int {
             ]);
             $orderId = (int)$data['id'];
         } else {
-            $data['order_no'] = generateOrderNo();
-            $db->prepare("
+            // Retry up to 3 times on order_no uniqueness collision (MAX+1 race).
+            $insertStmt = $db->prepare("
                 INSERT INTO orders (order_no, customer_id, order_date, delivery_date, suit_type, stitch_type,
                 cloth_source, stock_item_id, meters_used, brand_name, total_price, advance_paid, remaining,
                 status, notes, created_by)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-            ")->execute([
-                $data['order_no'], $data['customer_id'], $data['order_date'], $data['delivery_date'],
-                $data['suit_type'], $data['stitch_type'], $data['cloth_source'],
-                $data['stock_item_id'] ?: null, $data['meters_used'] ?: null, $data['brand_name'],
-                $data['total_price'], $data['advance_paid'], $data['remaining'],
-                $data['status'], $data['notes'], $userId
-            ]);
-            $orderId = (int)$db->lastInsertId();
+            ");
+            $orderId = null;
+            for ($attempt = 0; $attempt < 3; $attempt++) {
+                try {
+                    $data['order_no'] = generateOrderNo();
+                    $insertStmt->execute([
+                        $data['order_no'], $data['customer_id'], $data['order_date'], $data['delivery_date'],
+                        $data['suit_type'], $data['stitch_type'], $data['cloth_source'],
+                        $data['stock_item_id'] ?: null, $data['meters_used'] ?: null, $data['brand_name'],
+                        $data['total_price'], $data['advance_paid'], $data['remaining'],
+                        $data['status'], $data['notes'], $userId
+                    ]);
+                    $orderId = (int)$db->lastInsertId();
+                    break;
+                } catch (PDOException $e) {
+                    if ($attempt < 2 && str_contains($e->getMessage(), 'UNIQUE')) continue;
+                    throw $e;
+                }
+            }
         }
 
         // Upsert measurements.
