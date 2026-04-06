@@ -41,6 +41,7 @@ if ($action) {
 
         case 'save_order':
             requireLogin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=orders'); exit; }
             verifyCsrf();
             $error = null;
             try {
@@ -230,6 +231,7 @@ if ($action) {
 
         case 'save_stock':
             requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
             verifyCsrf();
             try {
                 $data = [
@@ -311,6 +313,7 @@ if ($action) {
 
         case 'add_worker':
             requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=workers'); exit; }
             verifyCsrf();
             $err = handleAddWorker();
             if ($err) flash('worker_err', $err);
