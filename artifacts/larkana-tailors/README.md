@@ -36,8 +36,8 @@ Workers can be added from the Admin panel (Workers section).
 **Worker can:**
 - Create and edit orders
 - Search customers
-- Print invoices
-- Cannot delete master data or view reports/financials
+- Print invoices (customer copy shows order amount/advance/remaining for payment collection)
+- Cannot delete master data, manage stock, view profit/loss reports, or access aggregate financial summaries
 
 ---
 

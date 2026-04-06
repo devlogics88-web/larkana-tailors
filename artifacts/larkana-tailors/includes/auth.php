@@ -33,6 +33,12 @@ function currentUser(): array {
 
 function handleLogin(): ?string {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return null;
+    // Verify pre-auth CSRF token (guards against login-CSRF).
+    $loginCsrf   = $_SESSION['login_csrf'] ?? '';
+    $providedCsrf = $_POST['csrf'] ?? '';
+    if (!$loginCsrf || !$providedCsrf || !hash_equals($loginCsrf, $providedCsrf)) {
+        return 'Invalid form token. Please refresh and try again.';
+    }
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     if (!$username || !$password) return 'Please enter username and password.';
@@ -66,6 +72,14 @@ function getCsrf(): string {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
     }
     return $_SESSION['csrf_token'];
+}
+
+// Pre-auth CSRF token for the login form (defense against login-CSRF attacks).
+function getCsrfLogin(): string {
+    if (empty($_SESSION['login_csrf'])) {
+        $_SESSION['login_csrf'] = bin2hex(random_bytes(16));
+    }
+    return $_SESSION['login_csrf'];
 }
 
 function verifyCsrf(): void {

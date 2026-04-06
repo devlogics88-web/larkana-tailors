@@ -19,6 +19,7 @@
     <div class="alert alert-error"><?= h($error) ?></div>
     <?php endif; ?>
     <form method="POST" action="?action=login">
+      <input type="hidden" name="csrf" value="<?= h(getCsrfLogin()) ?>">
       <div class="form-group">
         <label>Username (یوزر نیم)</label>
         <input type="text" name="username" autocomplete="username" autofocus required value="<?= h($_POST['username'] ?? '') ?>">
