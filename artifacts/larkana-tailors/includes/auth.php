@@ -59,6 +59,21 @@ function handleLogout(): void {
     exit;
 }
 
+function getCsrf(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrf(): void {
+    $provided = $_POST['csrf'] ?? $_GET['csrf'] ?? '';
+    if (!hash_equals((string)($_SESSION['csrf_token'] ?? ''), $provided)) {
+        http_response_code(403);
+        die('<p style="font-family:Arial;padding:20px;color:#c62828;">Invalid or expired form token. Please go back and try again.</p>');
+    }
+}
+
 function handleAddWorker(): ?string {
     if (!isAdmin()) return 'Access denied.';
     $username  = trim($_POST['username'] ?? '');

@@ -22,6 +22,7 @@ $stocks = getStockItems();
   </div>
   <div class="card-body">
     <form method="POST" action="?action=save_stock">
+      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
       <input type="hidden" name="stock_id" id="stock_id" value="">
       <div class="form-group mb-8">
         <label>Brand Name (برانڈ نام) *</label>
@@ -93,8 +94,10 @@ $stocks = getStockItems();
           <td><?= $s['sell_per_meter'] ? formatMoney($s['sell_per_meter']) : '-' ?></td>
           <td><?= formatMoney($s['available_meters'] * $s['cost_per_meter']) ?></td>
           <td style="white-space:nowrap;">
-            <a href="#" class="btn btn-info btn-sm" onclick='editStock(<?= json_encode($s) ?>);return false;'>Edit</a>
-            <a href="?action=delete_stock&id=<?= h($s['id']) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete stock item: <?= h($s['brand_name']) ?>?')">Del</a>
+            <a href="#" class="btn btn-info btn-sm"
+               data-stock="<?= h(json_encode($s, JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_TAG|JSON_HEX_AMP)) ?>"
+               onclick="editStockFromData(this);return false;">Edit</a>
+            <a href="?action=delete_stock&id=<?= h($s['id']) ?>&csrf=<?= h(getCsrf()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete stock item: <?= h($s['brand_name']) ?>?')">Del</a>
           </td>
         </tr>
         <?php endforeach; ?>

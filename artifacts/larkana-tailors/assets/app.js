@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clothSrc) toggleClothSource(clothSrc.value);
 });
 
+// Stock item: read from data-* attribute to avoid inline JSON injection risk.
+function editStockFromData(el) {
+    editStock(JSON.parse(el.dataset.stock));
+}
+
 // Stock item: fill meters when editing
 function editStock(data) {
     document.getElementById('stock_id').value      = data.id;

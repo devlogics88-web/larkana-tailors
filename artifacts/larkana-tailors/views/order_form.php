@@ -17,6 +17,7 @@ $pageTitle = $isEdit ? 'Edit Order #' . h($order['order_no']) : 'New Order (نی
 <?php endif; ?>
 
 <form method="POST" action="?action=save_order" id="order-form">
+<input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
 <?php if ($isEdit): ?>
 <input type="hidden" name="order_id" value="<?= h($orderId) ?>">
 <input type="hidden" name="customer_id" value="<?= h($order['customer_id']) ?>">

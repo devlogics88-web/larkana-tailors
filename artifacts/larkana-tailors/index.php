@@ -36,6 +36,7 @@ if ($action) {
 
         case 'save_order':
             requireLogin();
+            verifyCsrf();
             $error = null;
             try {
                 $customerId = (int)($_POST['customer_id'] ?? 0);
@@ -99,7 +100,7 @@ if ($action) {
             } catch (RuntimeException $e) {
                 $error = $e->getMessage();
             } catch (PDOException $e) {
-                $error = 'Database error: ' . $e->getMessage();
+                $error = 'A database error occurred. Please try again.';
             }
             // Fall through to show order form with error
             requireLogin();
@@ -121,6 +122,7 @@ if ($action) {
 
         case 'save_stock':
             requireAdmin();
+            verifyCsrf();
             try {
                 $data = [
                     'id'              => (int)($_POST['stock_id'] ?? 0) ?: null,
@@ -135,14 +137,17 @@ if ($action) {
                 if (!$data['brand_name']) throw new RuntimeException('Brand name is required.');
                 saveStockItem($data);
                 flash('stock_ok', 'Stock item saved.');
-            } catch (Exception $e) {
+            } catch (RuntimeException $e) {
                 flash('stock_err', $e->getMessage());
+            } catch (PDOException $e) {
+                flash('stock_err', 'A database error occurred. Please try again.');
             }
             header('Location: ?page=stock');
             exit;
 
         case 'delete_stock':
             requireAdmin();
+            verifyCsrf();
             $id = (int)($_GET['id'] ?? 0);
             if ($id) {
                 try {
@@ -157,6 +162,7 @@ if ($action) {
 
         case 'delete_order':
             requireAdmin();
+            verifyCsrf();
             $id = (int)($_GET['id'] ?? 0);
             if ($id) {
                 $db = getDB();
@@ -178,6 +184,7 @@ if ($action) {
 
         case 'add_worker':
             requireAdmin();
+            verifyCsrf();
             $err = handleAddWorker();
             if ($err) flash('worker_err', $err);
             else flash('worker_ok', 'Worker added successfully.');
@@ -186,6 +193,7 @@ if ($action) {
 
         case 'delete_worker':
             requireAdmin();
+            verifyCsrf();
             $id = (int)($_GET['id'] ?? 0);
             if ($id && $id !== (int)$_SESSION['user_id']) {
                 $db = getDB();

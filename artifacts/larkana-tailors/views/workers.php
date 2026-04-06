@@ -19,6 +19,7 @@ $workers = $db->query("SELECT id, username, role, full_name, created_at FROM use
   <div class="card-head">Add New Worker (نیا ورکر شامل کریں)</div>
   <div class="card-body">
     <form method="POST" action="?action=add_worker">
+      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
       <div class="form-group mb-8">
         <label>Full Name (پورا نام)</label>
         <input type="text" name="full_name" required placeholder="Worker Full Name">
@@ -51,7 +52,7 @@ $workers = $db->query("SELECT id, username, role, full_name, created_at FROM use
           <td><?= formatDate($w['created_at']) ?></td>
           <td>
             <?php if ($w['role'] !== 'admin'): ?>
-            <a href="?action=delete_worker&id=<?= h($w['id']) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete worker: <?= h($w['username']) ?>?')">Del</a>
+            <a href="?action=delete_worker&id=<?= h($w['id']) ?>&csrf=<?= h(getCsrf()) ?>" class="btn btn-danger btn-sm" onclick="return confirmDelete('Delete worker: <?= h($w['username']) ?>?')">Del</a>
             <?php else: ?>
             <span class="small">Admin</span>
             <?php endif; ?>
