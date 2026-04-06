@@ -45,9 +45,20 @@ if ($action) {
             $error = null;
             try {
                 $customerId = (int)($_POST['customer_id'] ?? 0);
+                $newName    = trim($_POST['new_name'] ?? '');
 
-                // Handle new customer creation
-                $newName = trim($_POST['new_name'] ?? '');
+                // Build and validate order data BEFORE creating a new customer,
+                // so a validation failure cannot leave an orphan customer record.
+                $clothSource  = $_POST['cloth_source'] ?? 'self';
+                $totalPrice   = (float)($_POST['total_price'] ?? 0);
+                $advancePaid  = (float)($_POST['advance_paid'] ?? 0);
+                if ($totalPrice < 0) throw new RuntimeException('Total price cannot be negative.');
+                if ($advancePaid > $totalPrice) throw new RuntimeException('Advance paid cannot exceed total price.');
+                if ($clothSource === 'shop' && !(int)($_POST['stock_item_id'] ?? 0)) throw new RuntimeException('Please select a stock item for shop cloth.');
+
+                if (!$customerId && !$newName) {
+                    throw new RuntimeException('Please select or add a customer.');
+                }
                 if (!$customerId && $newName !== '') {
                     $customerId = saveCustomer([
                         'name'    => $newName,
@@ -57,8 +68,7 @@ if ($action) {
                     ]);
                 }
                 if (!$customerId) {
-                    $error = 'Please select or add a customer.';
-                    throw new RuntimeException($error);
+                    throw new RuntimeException('Please select or add a customer.');
                 }
 
                 $orderData = [
@@ -68,12 +78,12 @@ if ($action) {
                     'delivery_date' => $_POST['delivery_date'] ?? null,
                     'suit_type'     => $_POST['suit_type'] ?? '',
                     'stitch_type'   => $_POST['stitch_type'] ?? '',
-                    'cloth_source'  => $_POST['cloth_source'] ?? 'self',
-                    'stock_item_id' => ($_POST['cloth_source'] ?? '') === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
-                    'meters_used'   => ($_POST['cloth_source'] ?? '') === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
+                    'cloth_source'  => $clothSource,
+                    'stock_item_id' => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
+                    'meters_used'   => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
                     'brand_name'    => $_POST['brand_name'] ?? '',
-                    'total_price'   => (float)($_POST['total_price'] ?? 0),
-                    'advance_paid'  => (float)($_POST['advance_paid'] ?? 0),
+                    'total_price'   => $totalPrice,
+                    'advance_paid'  => $advancePaid,
                     'remaining'     => (float)($_POST['remaining'] ?? 0),
                     'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
                     'notes'         => trim($_POST['notes'] ?? ''),
