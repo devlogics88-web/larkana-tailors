@@ -298,7 +298,7 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
       <div class="form-group">
         <label>Cloth Cost (کپڑے کی قیمت) Rs.</label>
         <input type="number" id="cloth_price_display" step="1" min="0" value="0"
-               readonly style="background:#f5f5f5; color:#1565c0; font-weight:bold;">
+               readonly style="background:#f5f5f5; color:#1B242D; font-weight:bold;">
         <small style="color:#666;font-size:10px;">Auto-calculated from stock</small>
       </div>
       <div class="form-group">

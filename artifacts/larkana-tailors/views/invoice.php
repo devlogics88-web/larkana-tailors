@@ -108,9 +108,9 @@ body { background: #fff; margin: 0; padding: 10px; }
       if (!$vL && !$vR) continue;
     ?>
     <tr>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e3f2fd;"><?= $urL ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e6eaed;"><?= $urL ?></td>
       <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vL) ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e3f2fd;"><?= $urR ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e6eaed;"><?= $urR ?></td>
       <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vR) ?></td>
     </tr>
     <?php endforeach; ?>
@@ -137,10 +137,10 @@ body { background: #fff; margin: 0; padding: 10px; }
       if (!$v0 && !$v1) continue;
     ?>
     <tr>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e3f2fd; width:22%;"><?= $p0[0] ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= $p0[0] ?></td>
       <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v0) ?></td>
       <?php if ($p1): ?>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e3f2fd; width:22%;"><?= $p1[0] ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= $p1[0] ?></td>
       <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v1) ?></td>
       <?php else: ?>
       <td colspan="2"></td>
@@ -178,9 +178,9 @@ body { background: #fff; margin: 0; padding: 10px; }
       <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($stitchingPrice) ?></td>
     </tr>
     <?php endif; ?>
-    <tr style="background:#e3f2fd;">
+    <tr style="background:#e6eaed;">
       <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount (کل قیمت)</td>
-      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1565c0;"><?= formatMoney($totalPrice) ?></td>
+      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1B242D;"><?= formatMoney($totalPrice) ?></td>
     </tr>
     <tr>
       <td style="padding:2px 4px;">Advance Paid (ایڈوانس)</td>

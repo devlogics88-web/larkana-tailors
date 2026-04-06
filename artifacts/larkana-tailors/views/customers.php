@@ -39,7 +39,7 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
       <tbody>
         <?php foreach ($customers as $c): ?>
         <tr>
-          <td style="font-family:monospace; font-size:11px; color:#1565c0; font-weight:bold;">CID-<?= str_pad($c['id'], 5, '0', STR_PAD_LEFT) ?></td>
+          <td style="font-family:monospace; font-size:11px; color:#1B242D; font-weight:bold;">CID-<?= str_pad($c['id'], 5, '0', STR_PAD_LEFT) ?></td>
           <td class="bold"><?= h($c['name']) ?></td>
           <td><?= h($c['phone'] ?? '-') ?></td>
           <td><?= h($c['address'] ?? '-') ?></td>

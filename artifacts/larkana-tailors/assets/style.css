@@ -2,11 +2,11 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy:    #1565c0;
-  --navy2:   #1976d2;
-  --navy3:   #1e88e5;
-  --blue-lt: #e3f2fd;
-  --blue-md: #90caf9;
+  --navy:    #1B242D;
+  --navy2:   #253240;
+  --navy3:   #2f4a5f;
+  --blue-lt: #e6eaed;
+  --blue-md: #8aa4b8;
   --green:   #2e7d32;
   --red:     #c62828;
   --orange:  #e65100;
@@ -18,7 +18,7 @@
   --gray4:   #bdbdbd;
   --gray5:   #9e9e9e;
   --text:    #212121;
-  --border:  #64b5f6;
+  --border:  #5c8099;
 }
 
 body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; background: var(--gray2); color: var(--text); }
@@ -35,7 +35,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; background: v
   border-bottom: 2px solid var(--navy3);
 }
 .shop-name { font-size: 15px; font-weight: bold; letter-spacing: .3px; }
-.shop-sub  { font-size: 11px; color: #c5cae9; margin-left: 10px; }
+.shop-sub  { font-size: 11px; color: #9bb0bf; margin-left: 10px; }
 .user-info { font-size: 12px; margin-right: 10px; }
 .btn-logout {
   background: #c62828; color: #fff; padding: 3px 10px;
@@ -57,7 +57,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; background: v
 }
 .sidebar nav { display: flex; flex-direction: column; padding: 6px 0; }
 .nav-item {
-  color: #c5cae9;
+  color: #9bb0bf;
   padding: 8px 12px;
   text-decoration: none;
   font-size: 12px;
@@ -67,7 +67,7 @@ body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; background: v
 }
 .nav-item:hover  { background: rgba(255,255,255,.1); color: #fff; }
 .nav-item.active { background: rgba(255,255,255,.15); color: #fff; border-left-color: #ffd54f; }
-.sidebar-footer  { padding: 8px 12px; font-size: 11px; color: #7986cb; border-top: 1px solid #3949ab; }
+.sidebar-footer  { padding: 8px 12px; font-size: 11px; color: #7a95a8; border-top: 1px solid #2d3f4e; }
 
 /* MAIN CONTENT */
 .main-content { margin-left: 180px; padding: 12px; flex: 1; }
@@ -247,7 +247,7 @@ tr:nth-child(even):hover td { background: var(--blue-lt); }
   text-align: center; border-bottom: 3px solid var(--gold);
 }
 .login-head h1 { font-size: 17px; }
-.login-head p  { font-size: 11px; color: #c5cae9; margin-top: 4px; }
+.login-head p  { font-size: 11px; color: #9bb0bf; margin-top: 4px; }
 .login-body { padding: 20px; }
 .login-body .form-group { margin-bottom: 12px; }
 .login-body label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 12px; }
