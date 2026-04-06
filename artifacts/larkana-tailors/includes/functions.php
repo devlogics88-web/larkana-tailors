@@ -130,8 +130,9 @@ function saveOrder(array $data, array $measurements): int {
         }
     }
 
-    // All database writes wrapped in a single transaction so no partial state persists.
-    $db->beginTransaction();
+    // Participate in an existing transaction (started by the caller) or open our own.
+    $ownTx = !$db->inTransaction();
+    if ($ownTx) $db->beginTransaction();
     try {
         if ($isEdit) {
             $db->prepare("
@@ -221,9 +222,9 @@ function saveOrder(array $data, array $measurements): int {
             }
         }
 
-        $db->commit();
+        if ($ownTx) $db->commit();
     } catch (Exception $e) {
-        $db->rollBack();
+        if ($ownTx) $db->rollBack();
         throw $e;
     }
 

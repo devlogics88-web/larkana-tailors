@@ -45,50 +45,21 @@ if ($action) {
             verifyCsrf();
             $error = null;
             try {
-                $customerId = (int)($_POST['customer_id'] ?? 0);
-                $newName    = trim($_POST['new_name'] ?? '');
+                $customerId  = (int)($_POST['customer_id'] ?? 0);
+                $newName     = trim($_POST['new_name'] ?? '');
+                $clothSource = $_POST['cloth_source'] ?? 'self';
+                $totalPrice  = (float)($_POST['total_price'] ?? 0);
+                $advancePaid = (float)($_POST['advance_paid'] ?? 0);
 
-                // Build and validate order data BEFORE creating a new customer,
-                // so a validation failure cannot leave an orphan customer record.
-                $clothSource  = $_POST['cloth_source'] ?? 'self';
-                $totalPrice   = (float)($_POST['total_price'] ?? 0);
-                $advancePaid  = (float)($_POST['advance_paid'] ?? 0);
+                // Early validation before any writes so invalid submissions never create data.
                 if ($totalPrice < 0) throw new RuntimeException('Total price cannot be negative.');
                 if ($advancePaid > $totalPrice) throw new RuntimeException('Advance paid cannot exceed total price.');
-                if ($clothSource === 'shop' && !(int)($_POST['stock_item_id'] ?? 0)) throw new RuntimeException('Please select a stock item for shop cloth.');
-
+                if ($clothSource === 'shop' && !(int)($_POST['stock_item_id'] ?? 0)) {
+                    throw new RuntimeException('Please select a stock item for shop cloth.');
+                }
                 if (!$customerId && !$newName) {
                     throw new RuntimeException('Please select or add a customer.');
                 }
-                if (!$customerId && $newName !== '') {
-                    $customerId = saveCustomer([
-                        'name'    => $newName,
-                        'phone'   => trim($_POST['new_phone'] ?? ''),
-                        'address' => trim($_POST['new_address'] ?? ''),
-                        'notes'   => '',
-                    ]);
-                }
-                if (!$customerId) {
-                    throw new RuntimeException('Please select or add a customer.');
-                }
-
-                $orderData = [
-                    'id'            => (int)($_POST['order_id'] ?? 0) ?: null,
-                    'customer_id'   => $customerId,
-                    'order_date'    => $_POST['order_date'] ?? date('Y-m-d'),
-                    'delivery_date' => $_POST['delivery_date'] ?? null,
-                    'suit_type'     => $_POST['suit_type'] ?? '',
-                    'stitch_type'   => $_POST['stitch_type'] ?? '',
-                    'cloth_source'  => $clothSource,
-                    'stock_item_id' => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
-                    'meters_used'   => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
-                    'brand_name'    => $_POST['brand_name'] ?? '',
-                    'total_price'   => $totalPrice,
-                    'advance_paid'  => $advancePaid,
-                    'remaining'     => (float)($_POST['remaining'] ?? 0),
-                    'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
-                    'notes'         => trim($_POST['notes'] ?? ''),
-                ];
 
                 $measurements = [
                     'shirt_length'   => $_POST['m_shirt_length'] ?? null,
@@ -109,7 +80,46 @@ if ($action) {
                     'detail'         => $_POST['m_detail'] ?? null,
                 ];
 
-                $orderId = saveOrder($orderData, $measurements);
+                // Wrap customer creation + order save in one transaction:
+                // if saveOrder() fails (e.g. stock depleted), the new customer row is rolled back.
+                $db = getDB();
+                $db->beginTransaction();
+                try {
+                    if (!$customerId && $newName !== '') {
+                        $customerId = saveCustomer([
+                            'name'    => $newName,
+                            'phone'   => trim($_POST['new_phone'] ?? ''),
+                            'address' => trim($_POST['new_address'] ?? ''),
+                            'notes'   => '',
+                        ]);
+                    }
+                    if (!$customerId) {
+                        throw new RuntimeException('Please select or add a customer.');
+                    }
+                    $orderData = [
+                        'id'            => (int)($_POST['order_id'] ?? 0) ?: null,
+                        'customer_id'   => $customerId,
+                        'order_date'    => $_POST['order_date'] ?? date('Y-m-d'),
+                        'delivery_date' => $_POST['delivery_date'] ?? null,
+                        'suit_type'     => $_POST['suit_type'] ?? '',
+                        'stitch_type'   => $_POST['stitch_type'] ?? '',
+                        'cloth_source'  => $clothSource,
+                        'stock_item_id' => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
+                        'meters_used'   => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
+                        'brand_name'    => $_POST['brand_name'] ?? '',
+                        'total_price'   => $totalPrice,
+                        'advance_paid'  => $advancePaid,
+                        'remaining'     => (float)($_POST['remaining'] ?? 0),
+                        'status'        => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
+                        'notes'         => trim($_POST['notes'] ?? ''),
+                    ];
+                    $orderId = saveOrder($orderData, $measurements);
+                    $db->commit();
+                } catch (Exception $inner) {
+                    $db->rollBack();
+                    throw $inner;
+                }
+
                 flash('order_ok', 'Order saved successfully!');
                 header("Location: ?page=order_edit&id=$orderId&saved=1");
                 exit;
