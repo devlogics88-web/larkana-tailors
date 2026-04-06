@@ -305,9 +305,16 @@ if ($action) {
             $id = (int)($_POST['id'] ?? 0);
             if ($id && $id !== (int)$_SESSION['user_id']) {
                 $db = getDB();
-                $db->prepare("DELETE FROM users WHERE id=? AND role!='admin'")->execute([$id]);
+                $stmt = $db->prepare("DELETE FROM users WHERE id=? AND role!='admin'");
+                $stmt->execute([$id]);
+                if ($stmt->rowCount() > 0) {
+                    flash('worker_ok', 'Worker deleted.');
+                } else {
+                    flash('worker_err', 'Worker not found or cannot be deleted.');
+                }
+            } else {
+                flash('worker_err', 'Cannot delete this account.');
             }
-            flash('worker_ok', 'Worker deleted.');
             header('Location: ?page=workers');
             exit;
     }

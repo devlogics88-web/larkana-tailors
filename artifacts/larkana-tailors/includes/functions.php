@@ -258,7 +258,7 @@ function saveStockItem(array $data): void {
            ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $data['id']]);
     } else {
         $db->prepare("INSERT INTO stock_items (brand_name, cloth_type, total_meters, available_meters, cost_per_meter, sell_per_meter, notes) VALUES (?,?,?,?,?,?,?)")
-           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['total_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes']]);
+           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes']]);
     }
 }
 
