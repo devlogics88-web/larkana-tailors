@@ -254,18 +254,26 @@ if ($action) {
             $id = (int)($_POST['id'] ?? 0);
             if ($id) {
                 $db = getDB();
-                // Restore stock meters before deleting.
-                $oStmt = $db->prepare("SELECT cloth_source, stock_item_id, meters_used FROM orders WHERE id=?");
-                $oStmt->execute([$id]);
-                $oRow = $oStmt->fetch();
-                if ($oRow && $oRow['cloth_source'] === 'shop' && $oRow['stock_item_id'] && $oRow['meters_used'] > 0) {
-                    $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-                       ->execute([$oRow['meters_used'], $oRow['stock_item_id']]);
+                $db->beginTransaction();
+                try {
+                    // Restore stock meters before deleting (inside transaction).
+                    $oStmt = $db->prepare("SELECT cloth_source, stock_item_id, meters_used FROM orders WHERE id=?");
+                    $oStmt->execute([$id]);
+                    $oRow = $oStmt->fetch();
+                    if ($oRow && $oRow['cloth_source'] === 'shop' && $oRow['stock_item_id'] && $oRow['meters_used'] > 0) {
+                        $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                           ->execute([$oRow['meters_used'], $oRow['stock_item_id']]);
+                    }
+                    // Remove dependent rows first (FK constraint).
+                    $db->prepare("DELETE FROM stock_transactions WHERE order_id=?")->execute([$id]);
+                    $db->prepare("DELETE FROM measurements WHERE order_id=?")->execute([$id]);
+                    $db->prepare("DELETE FROM orders WHERE id=?")->execute([$id]);
+                    $db->commit();
+                    flash('order_ok', 'Order deleted.');
+                } catch (Exception $e) {
+                    $db->rollBack();
+                    flash('order_err', 'Could not delete order. Please try again.');
                 }
-                // Remove dependent stock transactions first (FK constraint).
-                $db->prepare("DELETE FROM stock_transactions WHERE order_id=?")->execute([$id]);
-                $db->prepare("DELETE FROM measurements WHERE order_id=?")->execute([$id]);
-                $db->prepare("DELETE FROM orders WHERE id=?")->execute([$id]);
             }
             header('Location: ?page=orders');
             exit;

@@ -23,6 +23,10 @@ This is a lightweight shop management web application for Larkana Tailors & Clot
 
 Workers can be added from the Admin panel (Workers section).
 
+> **First worker setup:** After logging in as admin, navigate to **Workers** in the sidebar and click
+> **Add New Worker**. Set a username and password for each tailor/assistant. Workers can then log in
+> and manage orders but will not see financial data, reports, or deletion controls.
+
 **Admin can:**
 - Full access to all modules
 - View financial data (sales, profits, remaining)
