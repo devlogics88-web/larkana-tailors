@@ -225,6 +225,13 @@ if ($action) {
                     'notes'           => trim($_POST['stock_notes'] ?? ''),
                 ];
                 if (!$data['brand_name']) throw new RuntimeException('Brand name is required.');
+                if ($data['total_meters'] < 0) throw new RuntimeException('Total meters cannot be negative.');
+                if ($data['available_meters'] < 0) throw new RuntimeException('Available meters cannot be negative.');
+                if ($data['cost_per_meter'] < 0) throw new RuntimeException('Cost per meter cannot be negative.');
+                if ($data['sell_per_meter'] !== null && $data['sell_per_meter'] < 0) throw new RuntimeException('Selling price per meter cannot be negative.');
+                if ($data['id'] && $data['available_meters'] > $data['total_meters']) {
+                    throw new RuntimeException('Available meters cannot exceed total meters.');
+                }
                 saveStockItem($data);
                 flash('stock_ok', 'Stock item saved.');
             } catch (RuntimeException $e) {
