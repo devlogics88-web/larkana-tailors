@@ -1,0 +1,251 @@
+Build a lightweight Windows desktop application for a tailor shop named:
+
+Larkana Tailors and Cloth House
+Gents Specialist
+Owner: Lakhmir Khan
+Phone: 03002151261
+
+IMPORTANT GOAL:
+Build an MVP first to save AI credits. Do NOT over-engineer. Do NOT add extra features unless requested.
+Use the most suitable stack for a lightweight Windows desktop app that is easy to install, fast, stable, and works offline.
+
+RECOMMENDED STACK:
+Use Electron + React + SQLite
+Reason:
+- Runs on Windows easily
+- Easy installer build
+- Offline local database
+- Fast enough for shop use
+- Simple printing support for thermal printer
+- Good for future updates
+
+APP REQUIREMENTS:
+This is a Windows desktop application for a tailor shop. It must be:
+- lightweight
+- fast
+- error-free
+- easy to install
+- works on Windows desktop/laptop systems
+- optimized for 22-inch to 27-inch screens
+- clean, compact, old-style business UI
+- responsive inside desktop window
+- offline-first
+- local SQLite database
+
+SHOP ADDRESS:
+SOAN GARDEN, Shahid Arcade, Main Double Road, Opposite Bank Islami, Soan Garden, Islamabad
+
+PRINTER:
+Thermal printer support for invoices/receipts
+
+AUTHENTICATION:
+Create 2 roles:
+
+1. Admin Login
+- username: larkana
+- password: tailor
+- full access
+- can manage customers
+- can manage stock
+- can edit/delete all records
+- can view sales summary
+- can view profit/loss summary (basic version)
+- can print invoices
+- can manage workers
+
+2. Worker Login
+- restricted access
+- can add customer data
+- can edit only allowed order fields
+- can save order
+- can print invoice
+- cannot delete master data
+- cannot access profit/loss or full reports
+
+CORE MODULES (MVP ONLY):
+Build ONLY these first:
+
+1. Login Screen
+2. Dashboard
+3. Customer / Order Entry Form
+4. Customer Search
+5. Stock Management
+6. Invoice Print (Customer copy + Stitching Labour copy)
+7. Basic Reports (Admin only)
+8. Local SQLite storage
+
+CUSTOMER / ORDER FORM:
+Create a compact tailor form inspired by the attached screenshot.
+Form labels should be in English with Urdu in brackets, for example:
+- Customer Name (نام)
+- Phone Number (فون نمبر)
+- Address (پتہ)
+- Customer Type (کسٹمر قسم)
+- New / Old
+- Order Date (تاریخ)
+- Delivery Date (ڈیلیوری تاریخ)
+- Suit Type / Stitch Type (سلائی / سوٹ قسم)
+- Brand / Cloth Type
+- Self Cloth option
+- Measurements section
+- Price
+- Advance Payment
+- Remaining Payment
+- Total Payment
+- Notes
+
+CUSTOMER LOGIC:
+- Search customer by phone number or name
+- If customer is NEW:
+  - create new customer record
+- If customer is OLD:
+  - load existing customer data
+  - allow editing
+  - save updated record safely
+- No data loss
+
+MEASUREMENTS:
+Create a structured measurement section based on traditional shalwar kameez tailoring.
+Include fields such as:
+- Length
+- Shoulder
+- Chest
+- Waist
+- Hip
+- Sleeve
+- Arm
+- Collar
+- Cuff
+- Shalwar Length
+- Shalwar Bottom
+- Trouser Length
+- Trouser Bottom
+- Other notes
+
+STOCK MANAGEMENT:
+Create stock page where admin can:
+- add cloth brand/name (example: Pasha)
+- add total meters
+- add cost price per meter
+- optional selling price per meter
+- update stock
+- deduct stock when cloth is sold from shop
+- if customer brings own cloth, select “Self”
+
+ORDER FLOW:
+If customer buys cloth from shop:
+- select brand from stock dropdown
+- select quantity/meters used
+- deduct from stock automatically
+
+If customer brings own cloth:
+- select “Self”
+- no stock deduction
+
+INVOICE PRINTING:
+Generate 2 printable receipts for each order:
+
+1. Customer Copy
+- Shop name
+- Phone
+- Address
+- Customer details
+- Order details
+- Delivery date
+- Price summary
+- Advance
+- Remaining
+- Thermal printer friendly compact layout
+
+2. Stitching Labour Copy
+- Order ID
+- Customer name
+- Measurements
+- Suit/stitch details
+- Notes
+- This copy is used to attach with cloth for stitching worker
+- Thermal printer friendly compact layout
+
+REPORTS (MVP BASIC):
+Admin dashboard should show:
+- Total orders
+- Total sales
+- Total advance received
+- Total remaining payments
+- Basic profit/loss (simple formula from stock cost vs order value where applicable)
+
+UI / DESIGN RULES:
+- Old-style compact shop software look
+- Not modern SaaS style
+- Use strong readable fonts
+- Dense but clean layout
+- Optimized for keyboard use
+- Fast data entry
+- Good spacing for 22”–27” desktop screens
+- Support window resizing
+- Use tabs or sidebar navigation
+
+TECHNICAL RULES:
+- Use Electron + React + SQLite
+- Use local database only
+- Create clean folder structure
+- Add reusable components
+- Add validation
+- Prevent app crashes from bad input
+- Add basic error handling
+- Keep code simple and maintainable
+- Do NOT use unnecessary libraries
+- Do NOT use cloud services
+- Do NOT use Next.js for this desktop app
+- Do NOT overbuild reports in v1
+
+DELIVERY REQUIREMENTS:
+1. Build MVP only
+2. Generate clean project structure
+3. Add README with setup and build instructions
+4. Make sure app can run locally in Replit dev mode
+5. Prepare for Windows build packaging
+6. Initialize git if needed
+7. Push complete code to this GitHub repo:
+https://github.com/devlogics88-web/larkana-tailors.git
+
+WORKFLOW INSTRUCTIONS FOR AGENT:
+IMPORTANT:
+Work in phases and stop after each major phase summary instead of rebuilding everything repeatedly.
+
+Phase 1:
+- Setup Electron + React + SQLite
+- Create login screen
+- Create app shell (sidebar/topbar/dashboard)
+
+Phase 2:
+- Build customer/order form
+- Build search
+- Build save/edit customer flow
+
+Phase 3:
+- Build stock management
+- Connect stock to order flow
+
+Phase 4:
+- Build invoice templates for thermal printer
+
+Phase 5:
+- Build basic admin reports
+
+Phase 6:
+- Final cleanup, README, packaging prep, GitHub push
+
+Before writing large amounts of code:
+- First create the project architecture
+- Then implement phase by phase
+- Reuse components
+- Avoid duplicate files
+- Avoid unnecessary redesigns
+- Keep prompts and code efficient to save credits
+
+OUTPUT FORMAT:
+- Start by showing the proposed file structure
+- Then begin Phase 1 implementation
+- After each phase, provide a short summary only
+- Do not rewrite previous code unless necessary
