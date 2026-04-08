@@ -11,3 +11,6 @@ paths = ["/"]
 
 [services.development]
 run = "php -S 0.0.0.0:8000 /home/runner/workspace/artifacts/larkana-tailors/router.php"
+
+[services.production]
+run = "php -S 0.0.0.0:$PORT /home/runner/workspace/artifacts/larkana-tailors/router.php"
