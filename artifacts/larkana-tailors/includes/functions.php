@@ -166,7 +166,9 @@ function saveOrder(array $data, array $measurements): int {
                 stitching_type_id=?, stitching_type_name=?,
                 button_type_id=?, button_type_name=?, button_price=?,
                 pancha_type_id=?, pancha_type_name=?, pancha_price=?,
-                total_price=?, advance_paid=?, remaining=?, status=?, notes=?, updated_at=CURRENT_TIMESTAMP
+                discount=?, total_price=?, advance_paid=?, remaining=?,
+                payment_method=?, receiving_hand=?,
+                status=?, notes=?, updated_at=CURRENT_TIMESTAMP
                 WHERE id=?
             ")->execute([
                 $data['customer_id'], $data['order_date'], $data['delivery_date'], $data['suit_type'],
@@ -175,7 +177,9 @@ function saveOrder(array $data, array $measurements): int {
                 $data['stitching_type_id'] ?: null, $data['stitching_type_name'] ?: null,
                 $data['button_type_id'] ?: null, $data['button_type_name'] ?: null, $data['button_price'] ?? 0,
                 $data['pancha_type_id'] ?: null, $data['pancha_type_name'] ?: null, $data['pancha_price'] ?? 0,
+                $data['discount'] ?? 0,
                 $data['total_price'], $data['advance_paid'], $data['remaining'],
+                $data['payment_method'] ?? 'Cash', $data['receiving_hand'] ?? null,
                 $data['status'], $data['notes'], $data['id']
             ]);
             $orderId = (int)$data['id'];
@@ -186,8 +190,10 @@ function saveOrder(array $data, array $measurements): int {
                 stitching_type_id, stitching_type_name,
                 button_type_id, button_type_name, button_price,
                 pancha_type_id, pancha_type_name, pancha_price,
-                total_price, advance_paid, remaining, status, notes, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                discount, total_price, advance_paid, remaining,
+                payment_method, receiving_hand,
+                status, notes, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ");
             $orderId = null;
             for ($attempt = 0; $attempt < 3; $attempt++) {
@@ -201,8 +207,11 @@ function saveOrder(array $data, array $measurements): int {
                         $data['stitching_type_id'] ?: null, $data['stitching_type_name'] ?: null,
                         $data['button_type_id'] ?: null, $data['button_type_name'] ?: null, $data['button_price'] ?? 0,
                         $data['pancha_type_id'] ?: null, $data['pancha_type_name'] ?: null, $data['pancha_price'] ?? 0,
+                        $data['discount'] ?? 0,
                         $data['total_price'], $data['advance_paid'],
-                        $data['remaining'], $data['status'], $data['notes'], $userId
+                        $data['remaining'],
+                        $data['payment_method'] ?? 'Cash', $data['receiving_hand'] ?? null,
+                        $data['status'], $data['notes'], $userId
                     ]);
                     $orderId = (int)$db->lastInsertId();
                     break;
@@ -419,6 +428,7 @@ function getReportData(): array {
     $data = [];
     $data['total_orders']    = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
     $data['total_sales']     = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders")->fetchColumn();
+    $data['total_discounts'] = $db->query("SELECT COALESCE(SUM(COALESCE(discount,0)),0) FROM orders")->fetchColumn();
     $data['total_advance']   = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
     $data['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
 
@@ -440,11 +450,44 @@ function getReportData(): array {
         SELECT strftime('%Y-%m', order_date) as month,
                COUNT(*) as orders,
                COALESCE(SUM(total_price),0) as sales,
-               COALESCE(SUM(advance_paid),0) as advance
+               COALESCE(SUM(advance_paid),0) as advance,
+               COALESCE(SUM(COALESCE(discount,0)),0) as discounts
         FROM orders GROUP BY month ORDER BY month DESC LIMIT 12
     ")->fetchAll();
 
     $data['workers'] = $db->query("SELECT * FROM users WHERE role='worker' ORDER BY full_name")->fetchAll();
 
     return $data;
+}
+
+function deleteAllCustomers(): void {
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+        $db->exec("DELETE FROM stock_transactions WHERE order_id IN (SELECT id FROM orders)");
+        $db->exec("DELETE FROM measurements");
+        $db->exec("DELETE FROM orders");
+        $db->exec("DELETE FROM customers");
+        // Reset stock available_meters to total_meters since all orders are gone
+        $db->exec("UPDATE stock_items SET available_meters = total_meters, updated_at=CURRENT_TIMESTAMP");
+        $db->commit();
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
+}
+
+function deleteAllStocks(): void {
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+        // Nullify stock references in orders, then delete stock data
+        $db->exec("UPDATE orders SET stock_item_id=NULL, cloth_source='self', meters_used=NULL, updated_at=CURRENT_TIMESTAMP WHERE cloth_source='shop'");
+        $db->exec("DELETE FROM stock_transactions");
+        $db->exec("DELETE FROM stock_items");
+        $db->commit();
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
 }

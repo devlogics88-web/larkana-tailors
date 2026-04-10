@@ -162,9 +162,12 @@ if ($action) {
                         'pancha_type_id'      => $panchaTypeId,
                         'pancha_type_name'    => $panchaTypeName,
                         'pancha_price'        => $panchaPrice,
+                        'discount'            => max(0.0, (float)($_POST['discount'] ?? 0)),
                         'total_price'         => $totalPrice,
                         'advance_paid'        => $advancePaid,
                         'remaining'           => (float)($_POST['remaining'] ?? 0),
+                        'payment_method'      => in_array($_POST['payment_method'] ?? '', ['Cash','Online - JazzCash','Online - Easypaisa','Online - Bank Acc'], true) ? $_POST['payment_method'] : 'Cash',
+                        'receiving_hand'      => trim($_POST['receiving_hand'] ?? ''),
                         'status'              => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
                         'notes'               => trim($_POST['notes'] ?? ''),
                     ];
@@ -253,9 +256,12 @@ if ($action) {
                     'button_price'        => (float)($_POST['button_price'] ?? 0),
                     'pancha_type_id'      => $_POST['pancha_type_id'] ?? '',
                     'pancha_price'        => (float)($_POST['pancha_price'] ?? 0),
+                    'discount'            => (float)($_POST['discount'] ?? 0),
                     'total_price'         => (float)($_POST['total_price'] ?? 0),
                     'advance_paid'        => (float)($_POST['advance_paid'] ?? 0),
                     'remaining'           => (float)($_POST['remaining'] ?? 0),
+                    'payment_method'      => $_POST['payment_method'] ?? 'Cash',
+                    'receiving_hand'      => trim($_POST['receiving_hand'] ?? ''),
                     'status'              => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
                     'notes'               => trim($_POST['notes'] ?? ''),
                     'customer_name'       => (function(int $cid): string {
@@ -462,6 +468,40 @@ if ($action) {
                 }
             }
             header('Location: ?page=orders');
+            exit;
+
+        case 'delete_all_customers':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=customers'); exit; }
+            verifyCsrf();
+            if (trim($_POST['confirm_word'] ?? '') === 'OK') {
+                try {
+                    deleteAllCustomers();
+                    flash('customer_ok', 'All customer records, orders and measurements have been deleted.');
+                } catch (Exception $e) {
+                    flash('customer_err', 'Error: ' . $e->getMessage());
+                }
+            } else {
+                flash('customer_err', 'Confirmation word did not match. No records deleted.');
+            }
+            header('Location: ?page=customers');
+            exit;
+
+        case 'delete_all_stocks':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
+            verifyCsrf();
+            if (trim($_POST['confirm_word'] ?? '') === 'OK') {
+                try {
+                    deleteAllStocks();
+                    flash('stock_ok', 'All stock items and transactions have been deleted.');
+                } catch (Exception $e) {
+                    flash('stock_err', 'Error: ' . $e->getMessage());
+                }
+            } else {
+                flash('stock_err', 'Confirmation word did not match. No stocks deleted.');
+            }
+            header('Location: ?page=stock');
             exit;
 
         case 'backup_db':

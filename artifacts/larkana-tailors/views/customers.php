@@ -7,6 +7,13 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
   <a href="?page=order_new" class="btn btn-success btn-sm">+ New Order</a>
 </div>
 
+<?php if ($msg = flash('customer_ok')): ?>
+<div class="alert alert-success"><?= h($msg) ?></div>
+<?php endif; ?>
+<?php if ($err = flash('customer_err')): ?>
+<div class="alert alert-error"><?= h($err) ?></div>
+<?php endif; ?>
+
 <div class="card">
   <div class="card-body">
     <form method="GET" action="" class="search-box">
@@ -58,3 +65,41 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
 <?php elseif (!$search): ?>
 <div class="alert alert-info">No customers yet. Add new customers via the "New Order" form.</div>
 <?php endif; ?>
+
+<?php if (isAdmin()): ?>
+<!-- DELETE ALL CUSTOMERS -->
+<div class="card" style="border:2px solid #c62828; margin-top:16px;">
+  <div class="card-head" style="background:#c62828; color:#fff;">&#9888; Danger Zone — Delete All Customer Records</div>
+  <div class="card-body">
+    <p style="color:#c62828; font-weight:bold; margin-bottom:8px;">
+      WARNING: This will permanently delete ALL customers, orders, measurements and related data. This cannot be undone.
+    </p>
+    <button type="button" class="btn btn-danger" onclick="showDeleteAllCustomers()">&#128465; Delete All Customer Records</button>
+    <div id="delete-customers-confirm" style="display:none; margin-top:12px; background:#fff3e0; padding:10px; border:1px solid #e65100;">
+      <p style="margin:0 0 8px; color:#bf360c; font-weight:bold;">Type <strong>OK</strong> to confirm deletion of all records:</p>
+      <form method="POST" action="?action=delete_all_customers" onsubmit="return validateDeleteAll(this, 'customers')">
+        <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+        <input type="text" name="confirm_word" id="confirm_word_customers" autocomplete="off"
+               style="width:100px; margin-right:8px; font-size:14px; font-weight:bold; letter-spacing:2px;" placeholder="OK">
+        <button type="submit" class="btn btn-danger">Confirm Delete All</button>
+        <button type="button" class="btn" style="background:#546e7a;color:#fff;" onclick="document.getElementById('delete-customers-confirm').style.display='none'">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<script>
+function showDeleteAllCustomers() {
+    document.getElementById('delete-customers-confirm').style.display = 'block';
+    document.getElementById('confirm_word_customers').focus();
+}
+function validateDeleteAll(form, type) {
+    var wordField = form.querySelector('[name="confirm_word"]');
+    if (!wordField || wordField.value.trim() !== 'OK') {
+        alert('You must type exactly OK to confirm.');
+        return false;
+    }
+    return confirm('FINAL WARNING: All ' + type + ' data will be permanently deleted. Proceed?');
+}
+</script>

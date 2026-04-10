@@ -180,7 +180,42 @@ $buttonTypes = getButtonTypes();
 
 </div><!-- end button section grid -->
 
+<?php if (isAdmin()): ?>
+<!-- DELETE ALL STOCKS -->
+<div class="card" style="border:2px solid #c62828; margin-top:16px;">
+  <div class="card-head" style="background:#c62828; color:#fff;">&#9888; Danger Zone — Delete All Stocks</div>
+  <div class="card-body">
+    <p style="color:#c62828; font-weight:bold; margin-bottom:8px;">
+      WARNING: This will permanently delete ALL stock items, cloth stock, and all stock transactions. Orders will be updated to self-cloth. This cannot be undone.
+    </p>
+    <button type="button" class="btn btn-danger" onclick="showDeleteAllStocks()">&#128465; Delete All Stocks</button>
+    <div id="delete-stocks-confirm" style="display:none; margin-top:12px; background:#fff3e0; padding:10px; border:1px solid #e65100;">
+      <p style="margin:0 0 8px; color:#bf360c; font-weight:bold;">Type <strong>OK</strong> to confirm deletion of all stock data:</p>
+      <form method="POST" action="?action=delete_all_stocks" onsubmit="return validateStockDelete(this)">
+        <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+        <input type="text" name="confirm_word" id="confirm_word_stocks" autocomplete="off"
+               style="width:100px; margin-right:8px; font-size:14px; font-weight:bold; letter-spacing:2px;" placeholder="OK">
+        <button type="submit" class="btn btn-danger">Confirm Delete All Stocks</button>
+        <button type="button" class="btn" style="background:#546e7a;color:#fff;" onclick="document.getElementById('delete-stocks-confirm').style.display='none'">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <script>
+function showDeleteAllStocks() {
+    document.getElementById('delete-stocks-confirm').style.display = 'block';
+    document.getElementById('confirm_word_stocks').focus();
+}
+function validateStockDelete(form) {
+    var wordField = form.querySelector('[name="confirm_word"]');
+    if (!wordField || wordField.value.trim() !== 'OK') {
+        alert('You must type exactly OK to confirm.');
+        return false;
+    }
+    return confirm('FINAL WARNING: All stock data will be permanently deleted. Proceed?');
+}
 function resetStock() {
     document.getElementById('stock_id').value = '';
     document.getElementById('stock_form_title').textContent = 'Add New Stock Item';

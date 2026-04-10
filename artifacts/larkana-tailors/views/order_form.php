@@ -142,11 +142,15 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
         </select>
       </div>
       <div class="form-group">
-        <label>Stitch Quality</label>
-        <select name="stitch_type">
-          <option value="">-- Select --</option>
-          <?php foreach (['Machine Stitch','Hand Stitch','Semi-Hand','Fancy'] as $st): ?>
-          <option value="<?= h($st) ?>" <?= ($order['stitch_type'] ?? '') === $st ? 'selected' : '' ?>><?= h($st) ?></option>
+        <label>Stitching Type</label>
+        <select name="stitching_type_id" id="stitching_type_id" onchange="onStitchingTypeChange()">
+          <option value="">-- Select Stitching Type --</option>
+          <?php foreach ($stitchingTypes as $st): ?>
+          <option value="<?= h($st['id']) ?>"
+                  data-price="<?= h($st['price']) ?>"
+                  <?= (string)$currentStitchingTypeId === (string)$st['id'] ? 'selected' : '' ?>>
+            <?= h($st['name']) ?>
+          </option>
           <?php endforeach; ?>
         </select>
       </div>
@@ -193,10 +197,6 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
           <label>Brand / Cloth Name</label>
           <input type="text" name="brand_name" value="<?= h($order['brand_name'] ?? '') ?>" placeholder="e.g. Pasha, Gul Ahmed">
         </div>
-      </div>
-      <div id="cloth_cost_display" style="background:#e8f5e9; padding:6px 10px; font-size:12px; border:1px solid #a5d6a7; display:none;">
-        Cloth Cost: <strong id="cloth_cost_label">Rs. 0</strong>
-        &nbsp;=&nbsp; <span id="cloth_calc_detail"></span>
       </div>
     </div>
   </div>
@@ -265,35 +265,18 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
   <div class="card-head">&#128178; Pricing</div>
   <div class="card-body">
 
-    <!-- Stitching Type -->
+    <!-- Stitching Price (auto-set by stitching type chosen above) -->
     <div class="form-grid" style="align-items:end; margin-bottom:8px;">
       <div class="form-group">
-        <label>Stitching Type</label>
-        <select name="stitching_type_id" id="stitching_type_id" onchange="onStitchingTypeChange()">
-          <option value="">-- Select Stitching Type --</option>
-          <?php foreach ($stitchingTypes as $st): ?>
-          <option value="<?= h($st['id']) ?>"
-                  data-price="<?= h($st['price']) ?>"
-                  <?= (string)$currentStitchingTypeId === (string)$st['id'] ? 'selected' : '' ?>>
-            <?= h($st['name']) ?> &mdash; Rs. <?= number_format($st['price'], 0) ?>
-          </option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Stitching Price Rs.
-          <?php if (isAdmin()): ?><small style="font-weight:normal;color:#666;"> (admin can edit)</small><?php endif; ?>
-        </label>
+        <label>Stitching Price Rs.</label>
         <input type="number" name="stitching_price" id="stitching_price"
                step="50" min="0"
                value="<?= h($currentStitching) ?>"
                <?= !isAdmin() ? 'readonly style="background:#f5f5f5;"' : '' ?>
                oninput="calcTotal()">
       </div>
-    </div>
 
-    <!-- Button Type -->
-    <div class="form-grid" style="align-items:end; margin-bottom:8px;">
+      <!-- Button Type -->
       <div class="form-group">
         <label>Button Type</label>
         <select name="button_type_id" id="button_type_id" onchange="onButtonTypeChange()">
@@ -302,7 +285,7 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
           <option value="<?= h($bt['id']) ?>"
                   data-price="<?= h($bt['price']) ?>"
                   <?= (string)$currentButtonTypeId === (string)$bt['id'] ? 'selected' : '' ?>>
-            <?= h($bt['name']) ?> &mdash; Rs. <?= number_format($bt['price'], 0) ?>
+            <?= h($bt['name']) ?>
           </option>
           <?php endforeach; ?>
         </select>
@@ -313,10 +296,8 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
                step="50" min="0" value="<?= h($currentButtonPrice) ?>"
                readonly style="background:#f5f5f5;">
       </div>
-    </div>
 
-    <!-- Pancha Type -->
-    <div class="form-grid" style="align-items:end; margin-bottom:8px;">
+      <!-- Pancha Type -->
       <div class="form-group">
         <label>Pancha Type</label>
         <select name="pancha_type_id" id="pancha_type_id" onchange="onPanchaTypeChange()">
@@ -325,7 +306,7 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
           <option value="<?= h($pt['id']) ?>"
                   data-price="<?= h($pt['price']) ?>"
                   <?= (string)$currentPanchaTypeId === (string)$pt['id'] ? 'selected' : '' ?>>
-            <?= h($pt['name']) ?> &mdash; Rs. <?= number_format($pt['price'], 0) ?>
+            <?= h($pt['name']) ?>
           </option>
           <?php endforeach; ?>
         </select>
@@ -338,20 +319,33 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
       </div>
     </div>
 
-    <!-- Cloth cost + Total + Advance + Remaining -->
-    <div class="form-grid" style="align-items:end;">
+    <!-- Cloth cost + Gross Total row -->
+    <div class="form-grid" style="align-items:end; margin-bottom:8px;">
       <div class="form-group">
         <label>Cloth Cost Rs.</label>
         <input type="number" id="cloth_price_display" step="1" min="0" value="0"
                readonly style="background:#f5f5f5; color:#1B242D; font-weight:bold;">
-        <small style="color:#666;font-size:10px;">Auto-calculated from stock</small>
       </div>
+      <div class="form-group">
+        <label>Gross Total Rs.</label>
+        <input type="number" id="gross_total_display" step="1" min="0" value="0"
+               readonly style="background:#f5f5f5; color:#1B242D; font-weight:bold;">
+      </div>
+      <div class="form-group">
+        <label>Discount Rs. <span style="font-weight:normal; font-size:11px;">(optional)</span></label>
+        <input type="number" name="discount" id="discount"
+               step="1" min="0" value="<?= h($order['discount'] ?? 0) ?>"
+               placeholder="0" oninput="calcTotal()">
+      </div>
+    </div>
+
+    <!-- Total + Advance + Remaining -->
+    <div class="form-grid" style="align-items:end; margin-bottom:8px;">
       <div class="form-group">
         <label>Total Price Rs. *</label>
         <input type="number" name="total_price" id="total_price" step="1" min="0"
                value="<?= h($order['total_price'] ?? '') ?>"
                placeholder="0" required oninput="calcRemaining()">
-        <small style="color:#666;font-size:10px;">Stitching + Cloth + Button + Pancha (editable)</small>
       </div>
       <div class="form-group">
         <label>Advance Paid Rs.</label>
@@ -368,8 +362,25 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
                placeholder="0" readonly style="background:#f5f5f5; font-weight:bold; color:#c62828;">
       </div>
     </div>
+
+    <!-- Payment Method + Receiving Hand -->
+    <div class="form-grid" style="align-items:end; margin-bottom:8px;">
+      <div class="form-group">
+        <label>Payment Method</label>
+        <select name="payment_method" id="payment_method">
+          <?php foreach (['Cash','Online - JazzCash','Online - Easypaisa','Online - Bank Acc'] as $pm): ?>
+          <option value="<?= h($pm) ?>" <?= ($order['payment_method'] ?? 'Cash') === $pm ? 'selected' : '' ?>><?= h($pm) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Receiving Hand</label>
+        <input type="text" name="receiving_hand" value="<?= h($order['receiving_hand'] ?? '') ?>" placeholder="Name of person receiving payment">
+      </div>
+    </div>
+
     <div id="cloth_cost_display" style="background:#e8f5e9; padding:6px 10px; font-size:12px; border:1px solid #a5d6a7; display:none; margin-top:4px;">
-      Cloth Cost: <strong id="cloth_cost_label">Rs. 0</strong>
+      Cloth: <strong id="cloth_cost_label">Rs. 0</strong>
       &nbsp;=&nbsp; <span id="cloth_calc_detail"></span>
     </div>
   </div>
@@ -496,14 +507,16 @@ function getClothCost() {
 }
 
 function calcTotal() {
-    var clothCostEl    = document.getElementById('cloth_price_display');
-    var clothDisplay   = document.getElementById('cloth_cost_display');
-    var clothLabel     = document.getElementById('cloth_cost_label');
-    var clothDetail    = document.getElementById('cloth_calc_detail');
-    var stitchEl       = document.getElementById('stitching_price');
-    var buttonEl       = document.getElementById('button_price');
-    var panchaEl       = document.getElementById('pancha_price');
-    var totalEl        = document.getElementById('total_price');
+    var clothCostEl      = document.getElementById('cloth_price_display');
+    var grossDisplayEl   = document.getElementById('gross_total_display');
+    var clothDisplay     = document.getElementById('cloth_cost_display');
+    var clothLabel       = document.getElementById('cloth_cost_label');
+    var clothDetail      = document.getElementById('cloth_calc_detail');
+    var stitchEl         = document.getElementById('stitching_price');
+    var buttonEl         = document.getElementById('button_price');
+    var panchaEl         = document.getElementById('pancha_price');
+    var discountEl       = document.getElementById('discount');
+    var totalEl          = document.getElementById('total_price');
 
     var source = document.querySelector('input[name="cloth_source"]:checked');
     var isShop = source && source.value === 'shop';
@@ -526,8 +539,14 @@ function calcTotal() {
     var stitching = stitchEl  ? parseFloat(stitchEl.value  || '0') : 0;
     var button    = buttonEl  ? parseFloat(buttonEl.value  || '0') : 0;
     var pancha    = panchaEl  ? parseFloat(panchaEl.value  || '0') : 0;
-    var newTotal  = Math.round(clothCost + stitching + button + pancha);
-    if (totalEl && newTotal > 0) totalEl.value = newTotal;
+    var discount  = discountEl ? parseFloat(discountEl.value || '0') : 0;
+    if (discount < 0) discount = 0;
+
+    var gross    = Math.round(clothCost + stitching + button + pancha);
+    var netTotal = Math.max(0, gross - discount);
+
+    if (grossDisplayEl) grossDisplayEl.value = gross;
+    if (totalEl && gross > 0) totalEl.value = netTotal;
     calcRemaining();
 }
 

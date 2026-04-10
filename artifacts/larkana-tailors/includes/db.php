@@ -73,9 +73,12 @@ function initSchema(PDO $pdo): void {
             pancha_type_id INTEGER,
             pancha_type_name TEXT,
             pancha_price REAL DEFAULT 0,
+            discount REAL DEFAULT 0,
             total_price REAL DEFAULT 0,
             advance_paid REAL DEFAULT 0,
             remaining REAL DEFAULT 0,
+            payment_method TEXT DEFAULT 'Cash',
+            receiving_hand TEXT,
             status TEXT DEFAULT 'pending',
             notes TEXT,
             created_by INTEGER,
@@ -173,6 +176,9 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE orders ADD COLUMN pancha_type_id INTEGER",
         "ALTER TABLE orders ADD COLUMN pancha_type_name TEXT",
         "ALTER TABLE orders ADD COLUMN pancha_price REAL DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN discount REAL DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'Cash'",
+        "ALTER TABLE orders ADD COLUMN receiving_hand TEXT",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}

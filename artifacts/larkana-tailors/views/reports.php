@@ -32,7 +32,10 @@ $data = getReportData();
   <div class="card-body">
     <table>
       <tr><th style="width:60%;">Description</th><th>Amount</th></tr>
-      <tr><td>Total Revenue (all orders, all cloth sources)</td><td class="bold green"><?= formatMoney($data['total_sales']) ?></td></tr>
+      <tr><td>Total Revenue (all orders, net after discounts)</td><td class="bold green"><?= formatMoney($data['total_sales']) ?></td></tr>
+      <?php if ($data['total_discounts'] > 0): ?>
+      <tr><td>Total Discounts Given</td><td class="bold" style="color:#e65100;">- <?= formatMoney($data['total_discounts']) ?></td></tr>
+      <?php endif; ?>
       <tr><td>Shop Cloth Cost (cost of cloth used from stock)</td><td class="bold red"><?= formatMoney($data['stock_cost']) ?></td></tr>
       <tr style="background:#e8f5e9;">
         <td class="bold">Estimated Gross Profit <span style="font-weight:normal;font-size:11px;">(Revenue &minus; Shop Cloth Cost)</span></td>
@@ -76,6 +79,7 @@ $data = getReportData();
           <th>Month</th>
           <th>Orders</th>
           <th>Sales</th>
+          <th>Discounts</th>
           <th>Advance</th>
         </tr>
       </thead>
@@ -85,6 +89,7 @@ $data = getReportData();
           <td class="bold"><?= h($row['month']) ?></td>
           <td class="text-center bold"><?= h($row['orders']) ?></td>
           <td><?= formatMoney($row['sales']) ?></td>
+          <td style="color:#e65100;"><?= $row['discounts'] > 0 ? '- '.formatMoney($row['discounts']) : '-' ?></td>
           <td><?= formatMoney($row['advance']) ?></td>
         </tr>
         <?php endforeach; ?>
