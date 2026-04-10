@@ -207,24 +207,26 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
   <div class="card-head">&#128208; Measurements</div>
   <div class="card-body" style="padding:4px;">
 
-    <!-- Main single-column list (11 rows) -->
-    <table class="measure-table" style="width:100%;">
-      <colgroup><col style="width:36%;"><col style="width:64%;"></colgroup>
-      <tr><td class="label-cell">Shirt Length</td><td><input type="text" name="m_shirt_length" value="<?= h($m['shirt_length'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Bazu</td><td><input type="text" name="m_arm" value="<?= h($m['arm'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Teera</td><td><input type="text" name="m_shoulder" value="<?= h($m['shoulder'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Gala</td><td><input type="text" name="m_collar" value="<?= h($m['collar'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Chest</td><td><input type="text" name="m_chest" value="<?= h($m['chest'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Kamar</td><td><input type="text" name="m_waist" value="<?= h($m['waist'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Ghera</td><td><input type="text" name="m_hip" value="<?= h($m['hip'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Shalwar Length</td><td><input type="text" name="m_shalwar_length" value="<?= h($m['shalwar_length'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Pancha</td><td><input type="text" name="m_shalwar_bottom" value="<?= h($m['shalwar_bottom'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Shalwar Ghera</td><td><input type="text" name="m_shalwar_waist" value="<?= h($m['shalwar_waist'] ?? '') ?>"></td></tr>
-      <tr><td class="label-cell">Color Nok</td><td><input type="text" name="m_cuff" value="<?= h($m['cuff'] ?? '') ?>"></td></tr>
-    </table>
+    <!-- Main single-column list (11 rows) — 44% width, centered -->
+    <div style="width:44%; margin:0 auto;">
+      <table class="measure-table" style="width:100%;">
+        <colgroup><col style="width:44%;"><col style="width:56%;"></colgroup>
+        <tr><td class="label-cell">Shirt Length</td><td><input type="text" name="m_shirt_length" value="<?= h($m['shirt_length'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Bazu</td><td><input type="text" name="m_arm" value="<?= h($m['arm'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Teera</td><td><input type="text" name="m_shoulder" value="<?= h($m['shoulder'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Gala</td><td><input type="text" name="m_collar" value="<?= h($m['collar'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Chest</td><td><input type="text" name="m_chest" value="<?= h($m['chest'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Kamar</td><td><input type="text" name="m_waist" value="<?= h($m['waist'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Ghera</td><td><input type="text" name="m_hip" value="<?= h($m['hip'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Shalwar Length</td><td><input type="text" name="m_shalwar_length" value="<?= h($m['shalwar_length'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Pancha</td><td><input type="text" name="m_shalwar_bottom" value="<?= h($m['shalwar_bottom'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Shalwar Ghera</td><td><input type="text" name="m_shalwar_waist" value="<?= h($m['shalwar_waist'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Color Nok</td><td><input type="text" name="m_cuff" value="<?= h($m['cuff'] ?? '') ?>"></td></tr>
+      </table>
+    </div>
 
-    <!-- Two side-by-side tables -->
-    <div style="display:flex; gap:0; margin-top:5px; border-top:2px solid var(--blue-md);">
+    <!-- Two side-by-side tables — 44% total, centered -->
+    <div style="width:44%; margin:5px auto 0; border-top:2px solid var(--blue-md); display:flex; gap:0;">
 
       <!-- Left: Front / Size / Shalwar / Ghera Gol -->
       <table class="measure-table" style="width:50%; border-right:2px solid var(--blue-md);">
@@ -246,11 +248,11 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
 
     </div>
 
-    <!-- Detail row -->
-    <div style="border-top:1px solid var(--blue-md); margin-top:0;">
+    <!-- Detail row — 44% width, centered -->
+    <div style="width:44%; margin:0 auto; border-top:1px solid var(--blue-md);">
       <table class="measure-table" style="width:100%;">
         <tr>
-          <td class="label-cell" style="width:18%;">Detail</td>
+          <td class="label-cell" style="width:44%;">Detail</td>
           <td><input type="text" name="m_detail" value="<?= h($m['detail'] ?? '') ?>" style="width:100%;"></td>
         </tr>
       </table>
