@@ -60,14 +60,18 @@ if ($action) {
                     throw new RuntimeException('Please select or add a customer.');
                 }
 
-                // Resolve stitching type — always from DB, never from POST
+                // Resolve stitching type — name and price always from DB, never from POST
                 $stitchingTypeId   = (int)($_POST['stitching_type_id'] ?? 0) ?: null;
                 $stitchingTypeName = null;
+                $stitchingPriceFromType = null;
                 if ($stitchingTypeId) {
-                    $stStmt = getDB()->prepare("SELECT name FROM stitching_types WHERE id=?");
+                    $stStmt = getDB()->prepare("SELECT name, price FROM stitching_types WHERE id=?");
                     $stStmt->execute([$stitchingTypeId]);
                     $stRow = $stStmt->fetch();
-                    $stitchingTypeName = $stRow ? $stRow['name'] : null;
+                    if ($stRow) {
+                        $stitchingTypeName      = $stRow['name'];
+                        $stitchingPriceFromType = (float)$stRow['price'];
+                    }
                 }
 
                 // Resolve button type — price always from DB
@@ -149,7 +153,7 @@ if ($action) {
                         'stock_item_id'       => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
                         'meters_used'         => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
                         'brand_name'          => $_POST['brand_name'] ?? '',
-                        'stitching_price'     => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price', '2300')),
+                        'stitching_price'     => $stitchingPriceFromType ?? (float)getSetting('default_stitching_price', '2300'),
                         'stitching_type_id'   => $stitchingTypeId,
                         'stitching_type_name' => $stitchingTypeName,
                         'button_type_id'      => $buttonTypeId,

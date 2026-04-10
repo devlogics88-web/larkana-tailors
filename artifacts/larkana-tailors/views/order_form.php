@@ -437,10 +437,7 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
 </form>
 
 <script>
-var stockData      = <?= $stockJson ?>;
-var stitchingData  = <?= $stitchingJson ?>;
-var buttonData     = <?= $buttonJson ?>;
-var panchaData     = <?= $panchaJson ?>;
+var stockData = <?= $stockJson ?>;
 
 function searchCustomer() {
     var q = document.getElementById('customer_search_q').value.trim();

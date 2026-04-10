@@ -325,6 +325,7 @@ function saveStitchingType(array $data): void {
     $name  = trim($data['name'] ?? '');
     $price = (float)($data['price'] ?? 0);
     if ($name === '') throw new \InvalidArgumentException('Stitching type name is required.');
+    if ($price < 0) throw new \InvalidArgumentException('Stitching type price cannot be negative.');
     if (!empty($data['id'])) {
         $db->prepare("UPDATE stitching_types SET name=?, price=? WHERE id=?")
            ->execute([$name, $price, (int)$data['id']]);
@@ -351,6 +352,7 @@ function saveButtonType(array $data): void {
     $name  = trim($data['name'] ?? '');
     $price = (float)($data['price'] ?? 0);
     if ($name === '') throw new \InvalidArgumentException('Button type name is required.');
+    if ($price < 0) throw new \InvalidArgumentException('Button type price cannot be negative.');
     if (!empty($data['id'])) {
         $db->prepare("UPDATE button_types SET name=?, price=? WHERE id=?")
            ->execute([$name, $price, (int)$data['id']]);
@@ -377,6 +379,7 @@ function savePanchaType(array $data): void {
     $name  = trim($data['name'] ?? '');
     $price = (float)($data['price'] ?? 0);
     if ($name === '') throw new \InvalidArgumentException('Pancha type name is required.');
+    if ($price < 0) throw new \InvalidArgumentException('Pancha type price cannot be negative.');
     if (!empty($data['id'])) {
         $db->prepare("UPDATE pancha_types SET name=?, price=? WHERE id=?")
            ->execute([$name, $price, (int)$data['id']]);
