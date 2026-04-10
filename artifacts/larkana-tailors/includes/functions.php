@@ -227,6 +227,7 @@ function saveOrder(array $data, array $measurements): int {
                     'shalwar_length','shalwar_bottom','shalwar_waist','cuff',
                     'trouser_length','trouser_bottom','front_style',
                     'main_full','main_half','kaf','gera_chorus','size_note','shalwar_style','gera_oval',
+                    'harmol','chak_patti_button',
                     'detail'];
         $mVals = [];
         foreach ($mFields as $f) $mVals[$f] = $measurements[$f] ?? null;

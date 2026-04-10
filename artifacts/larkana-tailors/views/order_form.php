@@ -232,7 +232,7 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
       <table class="measure-table" style="width:50%; border-right:2px solid var(--blue-md);">
         <colgroup><col style="width:46%;"><col style="width:54%;"></colgroup>
         <tr><td class="label-cell">Front</td><td><input type="text" name="m_front_style" value="<?= h($m['front_style'] ?? '') ?>"></td></tr>
-        <tr><td class="label-cell">Size</td><td><input type="text" name="m_size_note" value="<?= h($m['size_note'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Side</td><td><input type="text" name="m_size_note" value="<?= h($m['size_note'] ?? '') ?>"></td></tr>
         <tr><td class="label-cell">Shalwar</td><td><input type="text" name="m_shalwar_style" value="<?= h($m['shalwar_style'] ?? '') ?>"></td></tr>
         <tr><td class="label-cell">Ghera Gol</td><td><input type="text" name="m_gera_oval" value="<?= h($m['gera_oval'] ?? '') ?>"></td></tr>
       </table>
@@ -242,6 +242,8 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
         <colgroup><col style="width:46%;"><col style="width:54%;"></colgroup>
         <tr><td class="label-cell">Bain Full</td><td><input type="text" name="m_main_full" value="<?= h($m['main_full'] ?? '') ?>"></td></tr>
         <tr><td class="label-cell">Bain Half</td><td><input type="text" name="m_main_half" value="<?= h($m['main_half'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Harmol</td><td><input type="text" name="m_harmol" value="<?= h($m['harmol'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Chak Patti Button</td><td><input type="text" name="m_chak_patti_button" value="<?= h($m['chak_patti_button'] ?? '') ?>"></td></tr>
         <tr><td class="label-cell">Cuff</td><td><input type="text" name="m_kaf" value="<?= h($m['kaf'] ?? '') ?>"></td></tr>
         <tr><td class="label-cell">Ghera Chorus</td><td><input type="text" name="m_gera_chorus" value="<?= h($m['gera_chorus'] ?? '') ?>"></td></tr>
       </table>

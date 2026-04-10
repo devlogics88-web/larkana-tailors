@@ -141,9 +141,10 @@ body { background: #fff; margin: 0; padding: 10px; }
   <?php
   $bottomRows = [
     ['Main Full',    'main_full',    'Front',        'front_style'],
-    ['Main Half',    'main_half',    'Size',         'size_note'],
+    ['Main Half',    'main_half',    'Side',         'size_note'],
     ['Kaf',          'kaf',          'Shalwar Style','shalwar_style'],
     ['Gera Chorus',  'gera_chorus',  'Gera Oval',    'gera_oval'],
+    ['Harmol',       'harmol',       'Chak Patti Button','chak_patti_button'],
   ];
   $hasBottom = false;
   foreach ($bottomRows as $r) {

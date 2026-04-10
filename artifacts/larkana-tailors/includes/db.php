@@ -114,6 +114,8 @@ function initSchema(PDO $pdo): void {
             size_note TEXT,
             shalwar_style TEXT,
             gera_oval TEXT,
+            harmol TEXT,
+            chak_patti_button TEXT,
             detail TEXT,
             FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
         );
@@ -179,6 +181,8 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE orders ADD COLUMN discount REAL DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'Cash'",
         "ALTER TABLE orders ADD COLUMN receiving_hand TEXT",
+        "ALTER TABLE measurements ADD COLUMN harmol TEXT",
+        "ALTER TABLE measurements ADD COLUMN chak_patti_button TEXT",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}
