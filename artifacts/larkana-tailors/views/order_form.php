@@ -202,109 +202,56 @@ $_showNewSection      = !$_showCustomerPanel && $_restoredNewName !== '';
   </div>
 </div>
 
-<!-- MEASUREMENTS matching the physical measurement card layout -->
+<!-- MEASUREMENTS -->
 <div class="card">
   <div class="card-head">&#128208; Measurements</div>
   <div class="card-body" style="padding:4px;">
 
-    <!-- Main measurements: single column (label | value), compact rows -->
+    <!-- Main single-column list (11 rows) -->
     <table class="measure-table" style="width:100%;">
-      <colgroup>
-        <col style="width:38%;">
-        <col style="width:62%;">
-      </colgroup>
-      <tr>
-        <td class="label-cell">Shirt Length</td>
-        <td><input type="text" name="m_shirt_length" value="<?= h($m['shirt_length'] ?? '') ?>" placeholder="45½"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Arm / Bazu</td>
-        <td><input type="text" name="m_arm" value="<?= h($m['arm'] ?? '') ?>" placeholder="9½"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Shoulder</td>
-        <td><input type="text" name="m_shoulder" value="<?= h($m['shoulder'] ?? '') ?>" placeholder="19½"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Collar / Neck</td>
-        <td><input type="text" name="m_collar" value="<?= h($m['collar'] ?? '') ?>" placeholder="18"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Chest</td>
-        <td><input type="text" name="m_chest" value="<?= h($m['chest'] ?? '') ?>" placeholder="28"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Waist</td>
-        <td><input type="text" name="m_waist" value="<?= h($m['waist'] ?? '') ?>" placeholder="32"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Hip</td>
-        <td><input type="text" name="m_hip" value="<?= h($m['hip'] ?? '') ?>" placeholder="30½"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Shalwar Length</td>
-        <td><input type="text" name="m_shalwar_length" value="<?= h($m['shalwar_length'] ?? '') ?>" placeholder="40"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Pancha (Shalwar Bottom)</td>
-        <td><input type="text" name="m_shalwar_bottom" value="<?= h($m['shalwar_bottom'] ?? '') ?>" placeholder="9"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Shalwar Waist</td>
-        <td><input type="text" name="m_shalwar_waist" value="<?= h($m['shalwar_waist'] ?? '') ?>" placeholder="22,18"></td>
-      </tr>
-      <tr>
-        <td class="label-cell">Cuff / Karnok</td>
-        <td><input type="text" name="m_cuff" value="<?= h($m['cuff'] ?? '') ?>" placeholder="2½"></td>
-      </tr>
+      <colgroup><col style="width:36%;"><col style="width:64%;"></colgroup>
+      <tr><td class="label-cell">Shirt Length</td><td><input type="text" name="m_shirt_length" value="<?= h($m['shirt_length'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Bazu</td><td><input type="text" name="m_arm" value="<?= h($m['arm'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Teera</td><td><input type="text" name="m_shoulder" value="<?= h($m['shoulder'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Gala</td><td><input type="text" name="m_collar" value="<?= h($m['collar'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Chest</td><td><input type="text" name="m_chest" value="<?= h($m['chest'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Kamar</td><td><input type="text" name="m_waist" value="<?= h($m['waist'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Ghera</td><td><input type="text" name="m_hip" value="<?= h($m['hip'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Shalwar Length</td><td><input type="text" name="m_shalwar_length" value="<?= h($m['shalwar_length'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Pancha</td><td><input type="text" name="m_shalwar_bottom" value="<?= h($m['shalwar_bottom'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Shalwar Ghera</td><td><input type="text" name="m_shalwar_waist" value="<?= h($m['shalwar_waist'] ?? '') ?>"></td></tr>
+      <tr><td class="label-cell">Color Nok</td><td><input type="text" name="m_cuff" value="<?= h($m['cuff'] ?? '') ?>"></td></tr>
     </table>
 
-    <!-- Bottom section: 2-column grid (4 rows x 2 cols) -->
-    <div style="margin-top:6px; border-top:2px solid var(--blue-md); padding-top:4px;">
-      <table class="measure-table" style="width:100%;">
-        <colgroup>
-          <col style="width:25%;">
-          <col style="width:25%;">
-          <col style="width:25%;">
-          <col style="width:25%;">
-        </colgroup>
-        <tr>
-          <td class="label-cell">Main Full</td>
-          <td><input type="text" name="m_main_full" value="<?= h($m['main_full'] ?? '') ?>" placeholder=""></td>
-          <td class="label-cell">Front</td>
-          <td><input type="text" name="m_front_style" value="<?= h($m['front_style'] ?? '') ?>" placeholder="e.g. V-Neck"></td>
-        </tr>
-        <tr>
-          <td class="label-cell">Main Half</td>
-          <td><input type="text" name="m_main_half" value="<?= h($m['main_half'] ?? '') ?>" placeholder=""></td>
-          <td class="label-cell">Size</td>
-          <td><input type="text" name="m_size_note" value="<?= h($m['size_note'] ?? '') ?>" placeholder=""></td>
-        </tr>
-        <tr>
-          <td class="label-cell">Kaf</td>
-          <td><input type="text" name="m_kaf" value="<?= h($m['kaf'] ?? '') ?>" placeholder=""></td>
-          <td class="label-cell">Shalwar Style</td>
-          <td><input type="text" name="m_shalwar_style" value="<?= h($m['shalwar_style'] ?? '') ?>" placeholder=""></td>
-        </tr>
-        <tr>
-          <td class="label-cell">Gera Chorus</td>
-          <td><input type="text" name="m_gera_chorus" value="<?= h($m['gera_chorus'] ?? '') ?>" placeholder=""></td>
-          <td class="label-cell">Gera Oval</td>
-          <td><input type="text" name="m_gera_oval" value="<?= h($m['gera_oval'] ?? '') ?>" placeholder=""></td>
-        </tr>
+    <!-- Two side-by-side tables -->
+    <div style="display:flex; gap:0; margin-top:5px; border-top:2px solid var(--blue-md);">
+
+      <!-- Left: Front / Size / Shalwar / Ghera Gol -->
+      <table class="measure-table" style="width:50%; border-right:2px solid var(--blue-md);">
+        <colgroup><col style="width:46%;"><col style="width:54%;"></colgroup>
+        <tr><td class="label-cell">Front</td><td><input type="text" name="m_front_style" value="<?= h($m['front_style'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Size</td><td><input type="text" name="m_size_note" value="<?= h($m['size_note'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Shalwar</td><td><input type="text" name="m_shalwar_style" value="<?= h($m['shalwar_style'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Ghera Gol</td><td><input type="text" name="m_gera_oval" value="<?= h($m['gera_oval'] ?? '') ?>"></td></tr>
       </table>
+
+      <!-- Right: Bain Full / Bain Half / Cuff / Ghera Chorus -->
+      <table class="measure-table" style="width:50%;">
+        <colgroup><col style="width:46%;"><col style="width:54%;"></colgroup>
+        <tr><td class="label-cell">Bain Full</td><td><input type="text" name="m_main_full" value="<?= h($m['main_full'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Bain Half</td><td><input type="text" name="m_main_half" value="<?= h($m['main_half'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Cuff</td><td><input type="text" name="m_kaf" value="<?= h($m['kaf'] ?? '') ?>"></td></tr>
+        <tr><td class="label-cell">Ghera Chorus</td><td><input type="text" name="m_gera_chorus" value="<?= h($m['gera_chorus'] ?? '') ?>"></td></tr>
+      </table>
+
     </div>
 
-    <!-- Detail / Notes row -->
-    <div style="margin-top:4px; border-top:1px solid #ccc; padding-top:4px;">
+    <!-- Detail row -->
+    <div style="border-top:1px solid var(--blue-md); margin-top:0;">
       <table class="measure-table" style="width:100%;">
         <tr>
-          <td class="label-cell" style="width:20%;">Detail / Notes</td>
-          <td colspan="3"><input type="text" name="m_detail" value="<?= h($m['detail'] ?? '') ?>" placeholder="Any stitching notes..." style="width:100%;"></td>
-        </tr>
-        <tr>
-          <td class="label-cell" style="width:20%;">Sleeve</td>
-          <td colspan="3"><input type="text" name="m_sleeve" value="<?= h($m['sleeve'] ?? '') ?>" placeholder="25½" style="width:100%;"></td>
+          <td class="label-cell" style="width:18%;">Detail</td>
+          <td><input type="text" name="m_detail" value="<?= h($m['detail'] ?? '') ?>" style="width:100%;"></td>
         </tr>
       </table>
     </div>

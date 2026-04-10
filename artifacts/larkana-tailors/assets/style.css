@@ -284,19 +284,19 @@ tr:nth-child(even):hover td { background: var(--blue-lt); }
 
 /* MEASUREMENT TABLE (order form) */
 .measure-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.measure-table td { border: 1px solid var(--blue-md); padding: 3px 4px; }
+.measure-table td { border: 1px solid var(--blue-md); padding: 1px 3px; }
 .measure-table .label-cell {
   background: var(--blue-lt);
   font-weight: bold;
   font-size: 10px;
-  line-height: 1.3;
-  width: 24%;
+  line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
 }
 .measure-table input {
-  width: 100%; border: none; padding: 3px 4px;
+  width: 100%; border: none; padding: 2px 3px;
   font-size: 12px; font-weight: bold; font-family: inherit;
-  background: transparent;
+  background: transparent; height: 22px;
 }
 .measure-table input:focus { background: #fffde7; outline: 1px solid var(--navy2); }
 
