@@ -122,10 +122,12 @@ if ($action) {
                     'main_half'      => $_POST['m_main_half'] ?? null,
                     'kaf'            => $_POST['m_kaf'] ?? null,
                     'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
-                    'size_note'      => $_POST['m_size_note'] ?? null,
-                    'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
-                    'gera_oval'      => $_POST['m_gera_oval'] ?? null,
-                    'detail'         => $_POST['m_detail'] ?? null,
+                    'size_note'        => $_POST['m_size_note'] ?? null,
+                    'shalwar_style'    => $_POST['m_shalwar_style'] ?? null,
+                    'gera_oval'        => $_POST['m_gera_oval'] ?? null,
+                    'harmol'           => $_POST['m_harmol'] ?? null,
+                    'chak_patti_button'=> $_POST['m_chak_patti_button'] ?? null,
+                    'detail'           => $_POST['m_detail'] ?? null,
                 ];
 
                 $db = getDB();
@@ -212,10 +214,12 @@ if ($action) {
                 'main_half'      => $_POST['m_main_half'] ?? null,
                 'kaf'            => $_POST['m_kaf'] ?? null,
                 'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
-                'size_note'      => $_POST['m_size_note'] ?? null,
-                'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
-                'gera_oval'      => $_POST['m_gera_oval'] ?? null,
-                'detail'         => $_POST['m_detail'] ?? null,
+                'size_note'        => $_POST['m_size_note'] ?? null,
+                'shalwar_style'    => $_POST['m_shalwar_style'] ?? null,
+                'gera_oval'        => $_POST['m_gera_oval'] ?? null,
+                'harmol'           => $_POST['m_harmol'] ?? null,
+                'chak_patti_button'=> $_POST['m_chak_patti_button'] ?? null,
+                'detail'           => $_POST['m_detail'] ?? null,
             ];
 
             if ($order) {
