@@ -3,7 +3,7 @@ $search = trim($_GET['q'] ?? '');
 $customers = $search ? searchCustomers($search) : getAllCustomers();
 ?>
 <div class="page-header">
-  <h2>&#128101; Customers (کسٹمر تلاش)</h2>
+  <h2>&#128101; Customers</h2>
   <a href="?page=order_new" class="btn btn-success btn-sm">+ New Order</a>
 </div>
 
@@ -11,7 +11,7 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
   <div class="card-body">
     <form method="GET" action="" class="search-box">
       <input type="hidden" name="page" value="customers">
-      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search by name or phone number... (نام یا فون نمبر سے تلاش کریں)" autofocus>
+      <input type="text" name="q" value="<?= h($search) ?>" placeholder="Search by name or phone number..." autofocus>
       <button type="submit" class="btn btn-primary">&#128269; Search</button>
     </form>
     <?php if ($search && empty($customers)): ?>
@@ -28,9 +28,9 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
       <thead>
         <tr>
           <th>Customer ID</th>
-          <th>Name (نام)</th>
-          <th>Phone (فون)</th>
-          <th>Address (پتہ)</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Address</th>
           <th>Registered</th>
           <th>Orders</th>
           <th>Actions</th>
@@ -56,5 +56,5 @@ $customers = $search ? searchCustomers($search) : getAllCustomers();
   </div>
 </div>
 <?php elseif (!$search): ?>
-<div class="alert alert-info">No customers yet. Add new customers via the "New Order" form. (ابھی تک کوئی کسٹمر نہیں۔)</div>
+<div class="alert alert-info">No customers yet. Add new customers via the "New Order" form.</div>
 <?php endif; ?>

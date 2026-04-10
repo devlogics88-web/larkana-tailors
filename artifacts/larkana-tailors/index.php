@@ -51,7 +51,6 @@ if ($action) {
                 $totalPrice  = (float)($_POST['total_price'] ?? 0);
                 $advancePaid = (float)($_POST['advance_paid'] ?? 0);
 
-                // Early validation before any writes so invalid submissions never create data.
                 if ($totalPrice < 0) throw new RuntimeException('Total price cannot be negative.');
                 if ($advancePaid > $totalPrice) throw new RuntimeException('Advance paid cannot exceed total price.');
                 if ($clothSource === 'shop' && !(int)($_POST['stock_item_id'] ?? 0)) {
@@ -59,6 +58,55 @@ if ($action) {
                 }
                 if (!$customerId && !$newName) {
                     throw new RuntimeException('Please select or add a customer.');
+                }
+
+                // Resolve stitching type
+                $stitchingTypeId   = (int)($_POST['stitching_type_id'] ?? 0) ?: null;
+                $stitchingTypeName = null;
+                if ($stitchingTypeId) {
+                    $db = getDB();
+                    $stRow = $db->prepare("SELECT name FROM stitching_types WHERE id=?")->execute([$stitchingTypeId]) ? null : null;
+                    $stStmt = $db->prepare("SELECT name FROM stitching_types WHERE id=?");
+                    $stStmt->execute([$stitchingTypeId]);
+                    $stRow = $stStmt->fetch();
+                    $stitchingTypeName = $stRow ? $stRow['name'] : null;
+                }
+
+                // Resolve button type
+                $buttonTypeId   = (int)($_POST['button_type_id'] ?? 0) ?: null;
+                $buttonTypeName = null;
+                $buttonPrice    = 0.0;
+                if ($buttonTypeId) {
+                    $db = getDB();
+                    $btStmt = $db->prepare("SELECT name, price FROM button_types WHERE id=?");
+                    $btStmt->execute([$buttonTypeId]);
+                    $btRow = $btStmt->fetch();
+                    if ($btRow) {
+                        $buttonTypeName = $btRow['name'];
+                        $buttonPrice    = (float)($btRow['price']);
+                    }
+                }
+                // Allow admin-submitted button_price override
+                if (isset($_POST['button_price']) && $_POST['button_price'] !== '') {
+                    $buttonPrice = (float)$_POST['button_price'];
+                }
+
+                // Resolve pancha type
+                $panchaTypeId   = (int)($_POST['pancha_type_id'] ?? 0) ?: null;
+                $panchaTypeName = null;
+                $panchaPrice    = 0.0;
+                if ($panchaTypeId) {
+                    $db = getDB();
+                    $ptStmt = $db->prepare("SELECT name, price FROM pancha_types WHERE id=?");
+                    $ptStmt->execute([$panchaTypeId]);
+                    $ptRow = $ptStmt->fetch();
+                    if ($ptRow) {
+                        $panchaTypeName = $ptRow['name'];
+                        $panchaPrice    = (float)($ptRow['price']);
+                    }
+                }
+                if (isset($_POST['pancha_price']) && $_POST['pancha_price'] !== '') {
+                    $panchaPrice = (float)$_POST['pancha_price'];
                 }
 
                 $measurements = [
@@ -87,8 +135,6 @@ if ($action) {
                     'detail'         => $_POST['m_detail'] ?? null,
                 ];
 
-                // Wrap customer creation + order save in one transaction:
-                // if saveOrder() fails (e.g. stock depleted), the new customer row is rolled back.
                 $db = getDB();
                 $db->beginTransaction();
                 try {
@@ -104,22 +150,30 @@ if ($action) {
                         throw new RuntimeException('Please select or add a customer.');
                     }
                     $orderData = [
-                        'id'              => (int)($_POST['order_id'] ?? 0) ?: null,
-                        'customer_id'     => $customerId,
-                        'order_date'      => $_POST['order_date'] ?? date('Y-m-d'),
-                        'delivery_date'   => $_POST['delivery_date'] ?? null,
-                        'suit_type'       => $_POST['suit_type'] ?? '',
-                        'stitch_type'     => $_POST['stitch_type'] ?? '',
-                        'cloth_source'    => $clothSource,
-                        'stock_item_id'   => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
-                        'meters_used'     => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
-                        'brand_name'      => $_POST['brand_name'] ?? '',
-                        'stitching_price' => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price', '2000')),
-                        'total_price'     => $totalPrice,
-                        'advance_paid'    => $advancePaid,
-                        'remaining'       => (float)($_POST['remaining'] ?? 0),
-                        'status'          => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
-                        'notes'           => trim($_POST['notes'] ?? ''),
+                        'id'                  => (int)($_POST['order_id'] ?? 0) ?: null,
+                        'customer_id'         => $customerId,
+                        'order_date'          => $_POST['order_date'] ?? date('Y-m-d'),
+                        'delivery_date'       => $_POST['delivery_date'] ?? null,
+                        'suit_type'           => $_POST['suit_type'] ?? '',
+                        'stitch_type'         => $_POST['stitch_type'] ?? '',
+                        'cloth_source'        => $clothSource,
+                        'stock_item_id'       => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
+                        'meters_used'         => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
+                        'brand_name'          => $_POST['brand_name'] ?? '',
+                        'stitching_price'     => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price', '2300')),
+                        'stitching_type_id'   => $stitchingTypeId,
+                        'stitching_type_name' => $stitchingTypeName,
+                        'button_type_id'      => $buttonTypeId,
+                        'button_type_name'    => $buttonTypeName,
+                        'button_price'        => $buttonPrice,
+                        'pancha_type_id'      => $panchaTypeId,
+                        'pancha_type_name'    => $panchaTypeName,
+                        'pancha_price'        => $panchaPrice,
+                        'total_price'         => $totalPrice,
+                        'advance_paid'        => $advancePaid,
+                        'remaining'           => (float)($_POST['remaining'] ?? 0),
+                        'status'              => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
+                        'notes'               => trim($_POST['notes'] ?? ''),
                     ];
                     $orderId = saveOrder($orderData, $measurements);
                     $db->commit();
@@ -138,12 +192,10 @@ if ($action) {
                 $error = 'A database error occurred. Please try again.';
             }
             // Fall through to show order form with error.
-            // Repopulate from POST so entered data is not lost.
             requireLogin();
             $orderId = (int)($_POST['order_id'] ?? 0);
             $order   = $orderId ? getOrder($orderId) : null;
 
-            // Build POST-state overlay for measurement fields.
             $postMeasurements = [
                 'shirt_length'   => $_POST['m_shirt_length'] ?? null,
                 'sleeve'         => $_POST['m_sleeve'] ?? null,
@@ -171,41 +223,49 @@ if ($action) {
             ];
 
             if ($order) {
-                // Edit failure: overlay the operator's POST changes onto DB data.
-                $order['order_date']   = $_POST['order_date']   ?? $order['order_date'];
-                $order['delivery_date']= $_POST['delivery_date']?? $order['delivery_date'];
-                $order['suit_type']    = $_POST['suit_type']    ?? $order['suit_type'];
-                $order['stitch_type']  = $_POST['stitch_type']  ?? $order['stitch_type'];
-                $order['cloth_source'] = $_POST['cloth_source'] ?? $order['cloth_source'];
-                $order['stock_item_id']= (int)($_POST['stock_item_id'] ?? 0) ?: $order['stock_item_id'];
-                $order['meters_used']  = isset($_POST['meters_used']) ? (float)$_POST['meters_used'] : $order['meters_used'];
-                $order['brand_name']   = $_POST['brand_name']   ?? $order['brand_name'];
-                $order['total_price']  = (float)($_POST['total_price']  ?? $order['total_price']);
-                $order['advance_paid'] = (float)($_POST['advance_paid'] ?? $order['advance_paid']);
-                $order['remaining']    = (float)($_POST['remaining']    ?? $order['remaining']);
-                $order['status']       = in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : $order['status'];
-                $order['notes']        = trim($_POST['notes']   ?? $order['notes']);
-                $order['measurements'] = array_merge($order['measurements'] ?? [], $postMeasurements);
+                $order['order_date']         = $_POST['order_date']   ?? $order['order_date'];
+                $order['delivery_date']      = $_POST['delivery_date']?? $order['delivery_date'];
+                $order['suit_type']          = $_POST['suit_type']    ?? $order['suit_type'];
+                $order['stitch_type']        = $_POST['stitch_type']  ?? $order['stitch_type'];
+                $order['cloth_source']       = $_POST['cloth_source'] ?? $order['cloth_source'];
+                $order['stock_item_id']      = (int)($_POST['stock_item_id'] ?? 0) ?: $order['stock_item_id'];
+                $order['meters_used']        = isset($_POST['meters_used']) ? (float)$_POST['meters_used'] : $order['meters_used'];
+                $order['brand_name']         = $_POST['brand_name']   ?? $order['brand_name'];
+                $order['stitching_type_id']  = $_POST['stitching_type_id'] ?? $order['stitching_type_id'];
+                $order['button_type_id']     = $_POST['button_type_id'] ?? $order['button_type_id'];
+                $order['button_price']       = $_POST['button_price'] ?? $order['button_price'];
+                $order['pancha_type_id']     = $_POST['pancha_type_id'] ?? $order['pancha_type_id'];
+                $order['pancha_price']       = $_POST['pancha_price'] ?? $order['pancha_price'];
+                $order['total_price']        = (float)($_POST['total_price']  ?? $order['total_price']);
+                $order['advance_paid']       = (float)($_POST['advance_paid'] ?? $order['advance_paid']);
+                $order['remaining']          = (float)($_POST['remaining']    ?? $order['remaining']);
+                $order['status']             = in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : $order['status'];
+                $order['notes']              = trim($_POST['notes']   ?? $order['notes']);
+                $order['measurements']       = array_merge($order['measurements'] ?? [], $postMeasurements);
             } elseif (!$order) {
-                // New-order failure: build from POST values entirely.
                 $order = [
-                    'id'             => null,
-                    'customer_id'    => (int)($_POST['customer_id'] ?? 0),
-                    'order_date'     => $_POST['order_date'] ?? date('Y-m-d'),
-                    'delivery_date'  => $_POST['delivery_date'] ?? '',
-                    'suit_type'      => $_POST['suit_type'] ?? '',
-                    'stitch_type'    => $_POST['stitch_type'] ?? '',
-                    'cloth_source'   => $_POST['cloth_source'] ?? 'self',
-                    'stock_item_id'  => (int)($_POST['stock_item_id'] ?? 0) ?: null,
-                    'meters_used'    => (float)($_POST['meters_used'] ?? 0) ?: null,
-                    'brand_name'     => $_POST['brand_name'] ?? '',
-                    'stitching_price' => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price','2000')),
-                    'total_price'    => (float)($_POST['total_price'] ?? 0),
-                    'advance_paid'   => (float)($_POST['advance_paid'] ?? 0),
-                    'remaining'      => (float)($_POST['remaining'] ?? 0),
-                    'status'         => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
-                    'notes'          => trim($_POST['notes'] ?? ''),
-                    'customer_name'   => (function(int $cid): string {
+                    'id'                  => null,
+                    'customer_id'         => (int)($_POST['customer_id'] ?? 0),
+                    'order_date'          => $_POST['order_date'] ?? date('Y-m-d'),
+                    'delivery_date'       => $_POST['delivery_date'] ?? '',
+                    'suit_type'           => $_POST['suit_type'] ?? '',
+                    'stitch_type'         => $_POST['stitch_type'] ?? '',
+                    'cloth_source'        => $_POST['cloth_source'] ?? 'self',
+                    'stock_item_id'       => (int)($_POST['stock_item_id'] ?? 0) ?: null,
+                    'meters_used'         => (float)($_POST['meters_used'] ?? 0) ?: null,
+                    'brand_name'          => $_POST['brand_name'] ?? '',
+                    'stitching_price'     => (float)($_POST['stitching_price'] ?? getSetting('default_stitching_price','2300')),
+                    'stitching_type_id'   => $_POST['stitching_type_id'] ?? '',
+                    'button_type_id'      => $_POST['button_type_id'] ?? '',
+                    'button_price'        => (float)($_POST['button_price'] ?? 0),
+                    'pancha_type_id'      => $_POST['pancha_type_id'] ?? '',
+                    'pancha_price'        => (float)($_POST['pancha_price'] ?? 0),
+                    'total_price'         => (float)($_POST['total_price'] ?? 0),
+                    'advance_paid'        => (float)($_POST['advance_paid'] ?? 0),
+                    'remaining'           => (float)($_POST['remaining'] ?? 0),
+                    'status'              => in_array($_POST['status'] ?? '', ['pending','ready','delivered','cancelled'], true) ? $_POST['status'] : 'pending',
+                    'notes'               => trim($_POST['notes'] ?? ''),
+                    'customer_name'       => (function(int $cid): string {
                         if (!$cid) return '';
                         $db = getDB();
                         $s  = $db->prepare("SELECT name FROM customers WHERE id=?");
@@ -215,31 +275,7 @@ if ($action) {
                     '_post_new_name'  => trim($_POST['new_name']  ?? ''),
                     '_post_new_phone' => trim($_POST['new_phone'] ?? ''),
                     '_post_new_addr'  => trim($_POST['new_address'] ?? ''),
-                    'measurements'   => [
-                        'shirt_length'   => $_POST['m_shirt_length'] ?? null,
-                        'sleeve'         => $_POST['m_sleeve'] ?? null,
-                        'arm'            => $_POST['m_arm'] ?? null,
-                        'shoulder'       => $_POST['m_shoulder'] ?? null,
-                        'collar'         => $_POST['m_collar'] ?? null,
-                        'chest'          => $_POST['m_chest'] ?? null,
-                        'waist'          => $_POST['m_waist'] ?? null,
-                        'hip'            => $_POST['m_hip'] ?? null,
-                        'shalwar_length' => $_POST['m_shalwar_length'] ?? null,
-                        'shalwar_bottom' => $_POST['m_shalwar_bottom'] ?? null,
-                        'shalwar_waist'  => $_POST['m_shalwar_waist'] ?? null,
-                        'cuff'           => $_POST['m_cuff'] ?? null,
-                        'trouser_length' => $_POST['m_trouser_length'] ?? null,
-                        'trouser_bottom' => $_POST['m_trouser_bottom'] ?? null,
-                        'front_style'    => $_POST['m_front_style'] ?? null,
-                        'main_full'      => $_POST['m_main_full'] ?? null,
-                        'main_half'      => $_POST['m_main_half'] ?? null,
-                        'kaf'            => $_POST['m_kaf'] ?? null,
-                        'gera_chorus'    => $_POST['m_gera_chorus'] ?? null,
-                        'size_note'      => $_POST['m_size_note'] ?? null,
-                        'shalwar_style'  => $_POST['m_shalwar_style'] ?? null,
-                        'gera_oval'      => $_POST['m_gera_oval'] ?? null,
-                        'detail'         => $_POST['m_detail'] ?? null,
-                    ],
+                    'measurements'    => $postMeasurements,
                 ];
             }
             require __DIR__ . '/includes/header.php';
@@ -311,6 +347,99 @@ if ($action) {
             header('Location: ?page=stock');
             exit;
 
+        case 'save_stitching_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=settings'); exit; }
+            verifyCsrf();
+            try {
+                saveStitchingType([
+                    'id'    => (int)($_POST['st_id'] ?? 0) ?: null,
+                    'name'  => trim($_POST['st_name'] ?? ''),
+                    'price' => (float)($_POST['st_price'] ?? 0),
+                ]);
+                flash('settings_ok', 'Stitching type saved.');
+            } catch (\InvalidArgumentException $e) {
+                flash('settings_err', $e->getMessage());
+            } catch (PDOException $e) {
+                flash('settings_err', 'Database error. Please try again.');
+            }
+            header('Location: ?page=settings');
+            exit;
+
+        case 'delete_stitching_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=settings'); exit; }
+            verifyCsrf();
+            $id = (int)($_POST['st_id'] ?? 0);
+            if ($id) {
+                deleteStitchingType($id);
+                flash('settings_ok', 'Stitching type deleted.');
+            }
+            header('Location: ?page=settings');
+            exit;
+
+        case 'save_button_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
+            verifyCsrf();
+            try {
+                saveButtonType([
+                    'id'    => (int)($_POST['bt_id'] ?? 0) ?: null,
+                    'name'  => trim($_POST['bt_name'] ?? ''),
+                    'price' => (float)($_POST['bt_price'] ?? 0),
+                ]);
+                flash('stock_ok', 'Button type saved.');
+            } catch (\InvalidArgumentException $e) {
+                flash('stock_err', $e->getMessage());
+            } catch (PDOException $e) {
+                flash('stock_err', 'Database error. Please try again.');
+            }
+            header('Location: ?page=stock');
+            exit;
+
+        case 'delete_button_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
+            verifyCsrf();
+            $id = (int)($_POST['bt_id'] ?? 0);
+            if ($id) {
+                deleteButtonType($id);
+                flash('stock_ok', 'Button type deleted.');
+            }
+            header('Location: ?page=stock');
+            exit;
+
+        case 'save_pancha_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=settings'); exit; }
+            verifyCsrf();
+            try {
+                savePanchaType([
+                    'id'    => (int)($_POST['pt_id'] ?? 0) ?: null,
+                    'name'  => trim($_POST['pt_name'] ?? ''),
+                    'price' => (float)($_POST['pt_price'] ?? 0),
+                ]);
+                flash('settings_ok', 'Pancha type saved.');
+            } catch (\InvalidArgumentException $e) {
+                flash('settings_err', $e->getMessage());
+            } catch (PDOException $e) {
+                flash('settings_err', 'Database error. Please try again.');
+            }
+            header('Location: ?page=settings');
+            exit;
+
+        case 'delete_pancha_type':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=settings'); exit; }
+            verifyCsrf();
+            $id = (int)($_POST['pt_id'] ?? 0);
+            if ($id) {
+                deletePanchaType($id);
+                flash('settings_ok', 'Pancha type deleted.');
+            }
+            header('Location: ?page=settings');
+            exit;
+
         case 'delete_order':
             requireAdmin();
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=orders'); exit; }
@@ -320,7 +449,6 @@ if ($action) {
                 $db = getDB();
                 $db->beginTransaction();
                 try {
-                    // Restore stock meters before deleting (inside transaction).
                     $oStmt = $db->prepare("SELECT cloth_source, stock_item_id, meters_used FROM orders WHERE id=?");
                     $oStmt->execute([$id]);
                     $oRow = $oStmt->fetch();
@@ -330,7 +458,6 @@ if ($action) {
                         $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,?,?,?)")
                            ->execute([$oRow['stock_item_id'], null, 'restore', $oRow['meters_used'], "Order #$id deleted — meters restored"]);
                     }
-                    // Remove dependent rows first (FK constraint).
                     $db->prepare("DELETE FROM stock_transactions WHERE order_id=?")->execute([$id]);
                     $db->prepare("DELETE FROM measurements WHERE order_id=?")->execute([$id]);
                     $db->prepare("DELETE FROM orders WHERE id=?")->execute([$id]);
@@ -394,7 +521,6 @@ if ($action) {
                         flash('worker_err', 'Worker not found or cannot be deleted.');
                     }
                 } catch (PDOException $e) {
-                    // FK constraint: worker still referenced by existing orders.
                     flash('worker_err', 'Cannot delete this worker — they have existing orders on record. Remove their orders first or keep the account.');
                 }
             } else {

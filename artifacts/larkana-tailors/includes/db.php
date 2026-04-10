@@ -64,7 +64,15 @@ function initSchema(PDO $pdo): void {
             stock_item_id INTEGER,
             meters_used REAL,
             brand_name TEXT,
-            stitching_price REAL DEFAULT 2000,
+            stitching_price REAL DEFAULT 2300,
+            stitching_type_id INTEGER,
+            stitching_type_name TEXT,
+            button_type_id INTEGER,
+            button_type_name TEXT,
+            button_price REAL DEFAULT 0,
+            pancha_type_id INTEGER,
+            pancha_type_name TEXT,
+            pancha_price REAL DEFAULT 0,
             total_price REAL DEFAULT 0,
             advance_paid REAL DEFAULT 0,
             remaining REAL DEFAULT 0,
@@ -123,6 +131,27 @@ function initSchema(PDO $pdo): void {
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS stitching_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS button_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS pancha_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            price REAL NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1
+        );
     ");
 
     // Migrations for existing databases
@@ -135,7 +164,15 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE measurements ADD COLUMN size_note TEXT",
         "ALTER TABLE measurements ADD COLUMN shalwar_style TEXT",
         "ALTER TABLE measurements ADD COLUMN gera_oval TEXT",
-        "ALTER TABLE orders ADD COLUMN stitching_price REAL DEFAULT 2000",
+        "ALTER TABLE orders ADD COLUMN stitching_price REAL DEFAULT 2300",
+        "ALTER TABLE orders ADD COLUMN stitching_type_id INTEGER",
+        "ALTER TABLE orders ADD COLUMN stitching_type_name TEXT",
+        "ALTER TABLE orders ADD COLUMN button_type_id INTEGER",
+        "ALTER TABLE orders ADD COLUMN button_type_name TEXT",
+        "ALTER TABLE orders ADD COLUMN button_price REAL DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN pancha_type_id INTEGER",
+        "ALTER TABLE orders ADD COLUMN pancha_type_name TEXT",
+        "ALTER TABLE orders ADD COLUMN pancha_price REAL DEFAULT 0",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}
@@ -151,11 +188,42 @@ function initSchema(PDO $pdo): void {
 
     // Seed default settings
     $pdo->exec("INSERT OR IGNORE INTO settings (key, value) VALUES
-        ('default_stitching_price', '2000'),
-        ('shop_name', 'Larkana Tailors & Cloth House'),
+        ('default_stitching_price', '2300'),
+        ('shop_name', 'Larkana Fabrics'),
         ('shop_phone', '0300-2151261'),
         ('shop_address', 'SOAN GARDEN, Shahid Arcade, Main Double Road, Islamabad')
     ");
+    // Migrations: update existing settings to new values
+    $pdo->exec("UPDATE settings SET value='Larkana Fabrics' WHERE key='shop_name' AND value LIKE '%Larkana Tailors%'");
+    $pdo->exec("UPDATE settings SET value='2300' WHERE key='default_stitching_price' AND CAST(value AS REAL) < 2300");
+
+    // Seed stitching types
+    $stCount = $pdo->query("SELECT COUNT(*) FROM stitching_types")->fetchColumn();
+    if (!$stCount) {
+        $pdo->exec("INSERT INTO stitching_types (name, price) VALUES
+            ('Single Stitching', 2300),
+            ('Double Stitching', 2600),
+            ('Gum Silai', 2800)
+        ");
+    }
+
+    // Seed button types
+    $btCount = $pdo->query("SELECT COUNT(*) FROM button_types")->fetchColumn();
+    if (!$btCount) {
+        $pdo->exec("INSERT INTO button_types (name, price) VALUES
+            ('Fancy Button', 200),
+            ('Tich Button', 400)
+        ");
+    }
+
+    // Seed pancha types
+    $ptCount = $pdo->query("SELECT COUNT(*) FROM pancha_types")->fetchColumn();
+    if (!$ptCount) {
+        $pdo->exec("INSERT INTO pancha_types (name, price) VALUES
+            ('Pancha Jali', 400),
+            ('Karhai', 250)
+        ");
+    }
 }
 
 function generateOrderNo(): string {

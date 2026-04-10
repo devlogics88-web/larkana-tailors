@@ -8,16 +8,21 @@ if (!$order) { echo '<p>Order not found.</p>'; return; }
 $m = $order['measurements'] ?? [];
 
 // Pricing breakdown
-$stitchingPrice = (float)($order['stitching_price'] ?? 0);
-$metersUsed     = (float)($order['meters_used'] ?? 0);
-$sellPerMeter   = (float)($order['stock_sell_per_meter'] ?? 0);
-$clothCost      = ($order['cloth_source'] === 'shop' && $metersUsed > 0) ? $metersUsed * $sellPerMeter : 0;
-$totalPrice     = (float)($order['total_price'] ?? 0);
-$advancePaid    = (float)($order['advance_paid'] ?? 0);
-$remaining      = (float)($order['remaining'] ?? 0);
+$stitchingPrice  = (float)($order['stitching_price'] ?? 0);
+$stitchingName   = $order['stitching_type_name'] ?? '';
+$buttonPrice     = (float)($order['button_price'] ?? 0);
+$buttonName      = $order['button_type_name'] ?? '';
+$panchaPrice     = (float)($order['pancha_price'] ?? 0);
+$panchaName      = $order['pancha_type_name'] ?? '';
+$metersUsed      = (float)($order['meters_used'] ?? 0);
+$sellPerMeter    = (float)($order['stock_sell_per_meter'] ?? 0);
+$clothCost       = ($order['cloth_source'] === 'shop' && $metersUsed > 0) ? $metersUsed * $sellPerMeter : 0;
+$totalPrice      = (float)($order['total_price'] ?? 0);
+$advancePaid     = (float)($order['advance_paid'] ?? 0);
+$remaining       = (float)($order['remaining'] ?? 0);
 
 // Customer ID formatted
-$customerId = (int)($order['customer_id'] ?? 0);
+$customerId  = (int)($order['customer_id'] ?? 0);
 $customerRef = $customerId ? 'CID-' . str_pad($customerId, 5, '0', STR_PAD_LEFT) : '';
 ?>
 <!DOCTYPE html>
@@ -39,12 +44,12 @@ body { background: #fff; margin: 0; padding: 10px; }
 </div>
 
 <div class="invoice-wrapper">
-  <div class="copy-title"><?= $isLabour ? 'STITCHING LABOUR COPY (لیبر کاپی)' : 'CUSTOMER COPY (کسٹمر کاپی)' ?></div>
+  <div class="copy-title"><?= $isLabour ? 'STITCHING LABOUR COPY' : 'CUSTOMER COPY' ?></div>
 
   <div style="text-align:center; margin-bottom:4px;">
     <img src="assets/logo.jpeg" alt="Logo" style="height:40px; width:auto;">
   </div>
-  <div class="inv-shop-name">Larkana Tailors &amp; Cloth House</div>
+  <div class="inv-shop-name">Larkana Fabrics</div>
   <div class="inv-shop-sub">Gents Specialist &mdash; Lakhmir Khan</div>
   <div class="inv-shop-sub"><?= h(getSetting('shop_address','SOAN GARDEN, Shahid Arcade, Islamabad')) ?></div>
   <div class="inv-shop-sub">&#128222; <?= h(getSetting('shop_phone','0300-2151261')) ?></div>
@@ -79,72 +84,96 @@ body { background: #fff; margin: 0; padding: 10px; }
     <label>Cloth:</label>
     <?= h($order['brand_name'] ?: ($order['stock_brand_name'] ?? '')) ?>
     <?php if ($metersUsed > 0): ?>
-      — <strong><?= h($metersUsed) ?>m</strong>
+      &mdash; <strong><?= h($metersUsed) ?>m</strong>
       <?php if ($sellPerMeter > 0): ?>
         @ Rs.<?= h(number_format($sellPerMeter,0)) ?>/m
       <?php endif; ?>
     <?php endif; ?>
   </div>
   <?php elseif ($order['cloth_source'] === 'self'): ?>
-  <div class="inv-section"><label>Cloth:</label> Self (اپنا کپڑا)</div>
+  <div class="inv-section"><label>Cloth:</label> Self (customer's own)</div>
   <?php endif; ?>
 
   <div class="inv-divider"></div>
 
   <!-- MEASUREMENTS matching physical card layout -->
-  <div style="font-size:11px; font-weight:bold; margin-bottom:3px;">Measurements (پیمائش):</div>
-  <table style="width:100%; border-collapse:collapse; font-size:10px;">
-    <?php
-    $rows = [
-      ['لمبائی قمیص','Shirt Length','shirt_length',  'بازو','Arm/Bazu','arm'],
-      ['تیرہ','Shoulder','shoulder',                  'گلا','Collar','collar'],
-      ['چسٹ','Chest','chest',                         'کمر','Waist','waist'],
-      ['گیرہ','Hip','hip',                            'شلوار لمبائی','Shlwr Length','shalwar_length'],
-      ['پانچہ','Shalwar Bottom','shalwar_bottom',     'شلوار گیرہ','Shlwr Waist','shalwar_waist'],
-      ['کارنوک','Cuff','cuff',                        'آستین','Sleeve','sleeve'],
-    ];
-    foreach ($rows as [$urL,$enL,$keyL, $urR,$enR,$keyR]):
-      $vL = $m[$keyL] ?? ''; $vR = $m[$keyR] ?? '';
-      if (!$vL && !$vR) continue;
+  <div style="font-size:11px; font-weight:bold; margin-bottom:3px;">Measurements:</div>
+
+  <!-- Main measurements: single column, label | value -->
+  <?php
+  $mainRows = [
+    ['Shirt Length',            'shirt_length'],
+    ['Arm / Bazu',              'arm'],
+    ['Shoulder',                'shoulder'],
+    ['Collar / Neck',           'collar'],
+    ['Chest',                   'chest'],
+    ['Waist',                   'waist'],
+    ['Hip',                     'hip'],
+    ['Shalwar Length',          'shalwar_length'],
+    ['Pancha (Shalwar Bottom)', 'shalwar_bottom'],
+    ['Shalwar Waist',           'shalwar_waist'],
+    ['Cuff / Karnok',           'cuff'],
+  ];
+  $hasMain = false;
+  foreach ($mainRows as [,$k]) { if (!empty($m[$k])) { $hasMain = true; break; } }
+  if ($hasMain):
+  ?>
+  <table style="width:100%; border-collapse:collapse; font-size:10px; margin-bottom:2px;">
+    <?php foreach ($mainRows as [$label, $key]):
+      $val = $m[$key] ?? '';
+      if (!$val) continue;
     ?>
     <tr>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e6eaed;"><?= $urL ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vL) ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:9px; width:22%; background:#e6eaed;"><?= $urR ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px; width:28%;"><?= h($vR) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; background:#e6eaed; font-size:9px; width:45%;"><?= h($label) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px;"><?= h($val) ?></td>
     </tr>
     <?php endforeach; ?>
   </table>
+  <?php endif; ?>
 
   <?php
-  // Bottom style section
-  $styleFields = [
-    ['فرنٹ','front_style'], ['مین فل','main_full'], ['مین ہاف','main_half'],
-    ['کف','kaf'], ['گیراچورس','gera_chorus'], ['سائز','size_note'],
-    ['شلوار','shalwar_style'], ['گیراول','gera_oval'],
-    ['ٹراؤزر','trouser_length'], ['موہری','trouser_bottom'],
+  // Bottom 2-column style section
+  $bottomRows = [
+    ['Main Full',    'main_full',    'Front',        'front_style'],
+    ['Main Half',    'main_half',    'Size',         'size_note'],
+    ['Kaf',          'kaf',          'Shalwar Style','shalwar_style'],
+    ['Gera Chorus',  'gera_chorus',  'Gera Oval',    'gera_oval'],
   ];
-  $hasStyle = false;
-  foreach ($styleFields as [,$k]) { if (!empty($m[$k])) { $hasStyle = true; break; } }
-  if ($hasStyle):
+  $hasBottom = false;
+  foreach ($bottomRows as $r) {
+      if (!empty($m[$r[1]]) || !empty($m[$r[3]])) { $hasBottom = true; break; }
+  }
+  if ($hasBottom):
   ?>
   <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:2px;">
-    <?php
-    $pairs = array_chunk($styleFields, 2);
-    foreach ($pairs as $pair):
-      $p0 = $pair[0]; $p1 = $pair[1] ?? null;
-      $v0 = $m[$p0[1]] ?? ''; $v1 = $p1 ? ($m[$p1[1]] ?? '') : '';
-      if (!$v0 && !$v1) continue;
+    <?php foreach ($bottomRows as [$lL,$kL,$lR,$kR]):
+      $vL = $m[$kL] ?? ''; $vR = $m[$kR] ?? '';
+      if (!$vL && !$vR) continue;
     ?>
     <tr>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= $p0[0] ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v0) ?></td>
-      <?php if ($p1): ?>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= $p1[0] ?></td>
-      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($v1) ?></td>
-      <?php else: ?>
-      <td colspan="2"></td>
-      <?php endif; ?>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= h($lL) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($vL) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-size:9px; background:#e6eaed; width:22%;"><?= h($lR) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; width:28%;"><?= h($vR) ?></td>
+    </tr>
+    <?php endforeach; ?>
+  </table>
+  <?php endif; ?>
+
+  <?php
+  // Trouser / Sleeve if filled
+  $extraRows = [['Sleeve','sleeve'],['Trouser Length','trouser_length'],['Trouser Bottom','trouser_bottom']];
+  $hasExtra  = false;
+  foreach ($extraRows as [,$k]) { if (!empty($m[$k])) { $hasExtra = true; break; } }
+  if ($hasExtra):
+  ?>
+  <table style="width:100%; border-collapse:collapse; font-size:10px; margin-top:2px;">
+    <?php foreach ($extraRows as [$label,$key]):
+      $val = $m[$key] ?? ''; if (!$val) continue;
+    ?>
+    <tr>
+      <td style="border:1px solid #ccc; padding:2px 4px; background:#e6eaed; font-size:9px; width:45%;"><?= h($label) ?></td>
+      <td style="border:1px solid #ccc; padding:2px 4px; font-weight:bold; font-size:12px;"><?= h($val) ?></td>
     </tr>
     <?php endforeach; ?>
   </table>
@@ -168,26 +197,38 @@ body { background: #fff; margin: 0; padding: 10px; }
   <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px;">
     <?php if ($order['cloth_source'] === 'shop' && $clothCost > 0): ?>
     <tr>
-      <td style="padding:2px 4px;">Cloth (<?= h($metersUsed) ?>m × Rs.<?= number_format($sellPerMeter,0) ?>)</td>
+      <td style="padding:2px 4px;">Cloth (<?= h($metersUsed) ?>m &times; Rs.<?= number_format($sellPerMeter,0) ?>)</td>
       <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($clothCost) ?></td>
     </tr>
     <?php endif; ?>
     <?php if ($stitchingPrice > 0): ?>
     <tr>
-      <td style="padding:2px 4px;">Stitching (سلائی)</td>
+      <td style="padding:2px 4px;">Stitching<?= $stitchingName ? ' — ' . h($stitchingName) : '' ?></td>
       <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($stitchingPrice) ?></td>
     </tr>
     <?php endif; ?>
+    <?php if ($buttonPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Button<?= $buttonName ? ' — ' . h($buttonName) : '' ?></td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($buttonPrice) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($panchaPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Pancha<?= $panchaName ? ' — ' . h($panchaName) : '' ?></td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($panchaPrice) ?></td>
+    </tr>
+    <?php endif; ?>
     <tr style="background:#e6eaed;">
-      <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount (کل قیمت)</td>
+      <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount</td>
       <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1B242D;"><?= formatMoney($totalPrice) ?></td>
     </tr>
     <tr>
-      <td style="padding:2px 4px;">Advance Paid (ایڈوانس)</td>
+      <td style="padding:2px 4px;">Advance Paid</td>
       <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;"><?= formatMoney($advancePaid) ?></td>
     </tr>
     <tr style="background:<?= $remaining > 0 ? '#fce4ec' : '#e8f5e9' ?>;">
-      <td style="padding:3px 4px; font-weight:bold; font-size:12px;">Balance Due (باقی رقم)</td>
+      <td style="padding:3px 4px; font-weight:bold; font-size:12px;">Balance Due</td>
       <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:14px; color:<?= $remaining > 0 ? '#c62828' : '#2e7d32' ?>;"><?= formatMoney($remaining) ?></td>
     </tr>
   </table>
@@ -195,8 +236,8 @@ body { background: #fff; margin: 0; padding: 10px; }
 
   <div class="inv-divider"></div>
   <div class="inv-footer">
-    Thank you for your trust! (شکریہ)<br>
-    Larkana Tailors &amp; Cloth House<br>
+    Thank you for your trust!<br>
+    Larkana Fabrics<br>
     <?= h(getSetting('shop_phone','0300-2151261')) ?>
   </div>
 </div>

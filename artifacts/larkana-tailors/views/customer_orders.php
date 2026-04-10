@@ -22,11 +22,11 @@ $sum = $totals->fetch();
 </div>
 
 <div class="card">
-  <div class="card-head">Customer Info (کسٹمر کی معلومات)</div>
+  <div class="card-head">Customer Info</div>
   <div class="card-body">
     <table style="width:auto;">
-      <tr><th>Name (نام)</th><td><?= h($customer['name']) ?></td><th>Phone (فون)</th><td><?= h($customer['phone'] ?? '-') ?></td></tr>
-      <tr><th>Address (پتہ)</th><td colspan="3"><?= h($customer['address'] ?? '-') ?></td></tr>
+      <tr><th>Name</th><td><?= h($customer['name']) ?></td><th>Phone</th><td><?= h($customer['phone'] ?? '-') ?></td></tr>
+      <tr><th>Address</th><td colspan="3"><?= h($customer['address'] ?? '-') ?></td></tr>
       <?php if (isAdmin()): ?>
       <tr>
         <th>Total Orders</th><td><?= count($customerOrders) ?></td>
@@ -42,7 +42,7 @@ $sum = $totals->fetch();
 </div>
 
 <div class="card">
-  <div class="card-head">Order History (آرڈر تاریخ)</div>
+  <div class="card-head">Order History</div>
   <div class="card-body" style="padding:0;">
     <?php if (empty($customerOrders)): ?>
     <p style="padding:12px; color:#999; text-align:center;">No orders yet.</p>

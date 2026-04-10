@@ -3,7 +3,7 @@ $db = getDB();
 $workers = $db->query("SELECT id, username, role, full_name, created_at FROM users ORDER BY role DESC, full_name")->fetchAll();
 ?>
 <div class="page-header">
-  <h2>&#128119; Workers / Users (ورکرز)</h2>
+  <h2>&#128119; Workers / Users</h2>
 </div>
 
 <?php if ($msg = flash('worker_ok')): ?>
@@ -16,20 +16,20 @@ $workers = $db->query("SELECT id, username, role, full_name, created_at FROM use
 <div class="form-grid-2" style="align-items:start;">
 
 <div class="card">
-  <div class="card-head">Add New Worker (نیا ورکر شامل کریں)</div>
+  <div class="card-head">Add New Worker</div>
   <div class="card-body">
     <form method="POST" action="?action=add_worker">
       <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
       <div class="form-group mb-8">
-        <label>Full Name (پورا نام)</label>
+        <label>Full Name</label>
         <input type="text" name="full_name" required placeholder="Worker Full Name">
       </div>
       <div class="form-group mb-8">
-        <label>Username (یوزر نیم) *</label>
+        <label>Username *</label>
         <input type="text" name="username" required placeholder="Login username" autocomplete="off">
       </div>
       <div class="form-group mb-8">
-        <label>Password (پاس ورڈ) *</label>
+        <label>Password *</label>
         <input type="password" name="password" required placeholder="Login password" autocomplete="new-password">
       </div>
       <button type="submit" class="btn btn-success">&#10003; Add Worker</button>
@@ -38,7 +38,7 @@ $workers = $db->query("SELECT id, username, role, full_name, created_at FROM use
 </div>
 
 <div class="card">
-  <div class="card-head">Users List (یوزرز)</div>
+  <div class="card-head">Users List</div>
   <div class="card-body" style="padding:0;">
     <table>
       <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Added</th><th>Action</th></tr></thead>

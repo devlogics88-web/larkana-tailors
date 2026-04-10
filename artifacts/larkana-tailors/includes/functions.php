@@ -39,7 +39,6 @@ function formatDate(?string $d): string {
 function searchCustomers(string $query): array {
     $db   = getDB();
     $like = '%' . $query . '%';
-    // Include order_count in one query to avoid N+1 in the customer list view.
     $stmt = $db->prepare("
         SELECT c.*, COALESCE(oc.cnt, 0) AS order_count
         FROM customers c
@@ -113,7 +112,6 @@ function saveOrder(array $data, array $measurements): int {
     $userId = $_SESSION['user_id'];
     $isEdit = !empty($data['id']);
 
-    // Server-side validation before touching the DB.
     $totalPrice  = (float)($data['total_price'] ?? 0);
     $advancePaid = (float)($data['advance_paid'] ?? 0);
     if ($totalPrice < 0)   throw new RuntimeException('Total price cannot be negative.');
@@ -126,7 +124,6 @@ function saveOrder(array $data, array $measurements): int {
 
     $data['remaining'] = $totalPrice - $advancePaid;
 
-    // Determine what stock was previously used (for edits).
     $oldStockItemId = null;
     $oldMetersUsed  = 0.0;
     $oldClothSource = 'self';
@@ -144,12 +141,10 @@ function saveOrder(array $data, array $measurements): int {
     $newStockItemId = $data['cloth_source'] === 'shop' ? (int)($data['stock_item_id'] ?? 0) : 0;
     $newMetersUsed  = $data['cloth_source'] === 'shop' ? (float)($data['meters_used'] ?? 0) : 0.0;
 
-    // Validate stock availability BEFORE any writes.
     if ($newStockItemId && $newMetersUsed > 0) {
         $availStmt = $db->prepare("SELECT available_meters FROM stock_items WHERE id=?");
         $availStmt->execute([$newStockItemId]);
         $availNow = (float)($availStmt->fetchColumn() ?? 0);
-        // For edits, the old deduction on the same item will be restored, freeing meters.
         $effectiveAvail = $availNow + (
             $isEdit && $oldClothSource === 'shop' && $oldStockItemId === $newStockItemId
                 ? $oldMetersUsed : 0
@@ -161,7 +156,6 @@ function saveOrder(array $data, array $measurements): int {
         }
     }
 
-    // Participate in an existing transaction (started by the caller) or open our own.
     $ownTx = !$db->inTransaction();
     if ($ownTx) $db->beginTransaction();
     try {
@@ -169,23 +163,31 @@ function saveOrder(array $data, array $measurements): int {
             $db->prepare("
                 UPDATE orders SET customer_id=?, order_date=?, delivery_date=?, suit_type=?, stitch_type=?,
                 cloth_source=?, stock_item_id=?, meters_used=?, brand_name=?, stitching_price=?,
+                stitching_type_id=?, stitching_type_name=?,
+                button_type_id=?, button_type_name=?, button_price=?,
+                pancha_type_id=?, pancha_type_name=?, pancha_price=?,
                 total_price=?, advance_paid=?, remaining=?, status=?, notes=?, updated_at=CURRENT_TIMESTAMP
                 WHERE id=?
             ")->execute([
                 $data['customer_id'], $data['order_date'], $data['delivery_date'], $data['suit_type'],
                 $data['stitch_type'], $data['cloth_source'], $data['stock_item_id'] ?: null,
                 $data['meters_used'] ?: null, $data['brand_name'], $data['stitching_price'],
+                $data['stitching_type_id'] ?: null, $data['stitching_type_name'] ?: null,
+                $data['button_type_id'] ?: null, $data['button_type_name'] ?: null, $data['button_price'] ?? 0,
+                $data['pancha_type_id'] ?: null, $data['pancha_type_name'] ?: null, $data['pancha_price'] ?? 0,
                 $data['total_price'], $data['advance_paid'], $data['remaining'],
                 $data['status'], $data['notes'], $data['id']
             ]);
             $orderId = (int)$data['id'];
         } else {
-            // Retry up to 3 times on order_no uniqueness collision (MAX+1 race).
             $insertStmt = $db->prepare("
                 INSERT INTO orders (order_no, customer_id, order_date, delivery_date, suit_type, stitch_type,
-                cloth_source, stock_item_id, meters_used, brand_name, stitching_price, total_price,
-                advance_paid, remaining, status, notes, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                cloth_source, stock_item_id, meters_used, brand_name, stitching_price,
+                stitching_type_id, stitching_type_name,
+                button_type_id, button_type_name, button_price,
+                pancha_type_id, pancha_type_name, pancha_price,
+                total_price, advance_paid, remaining, status, notes, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ");
             $orderId = null;
             for ($attempt = 0; $attempt < 3; $attempt++) {
@@ -195,7 +197,11 @@ function saveOrder(array $data, array $measurements): int {
                         $data['order_no'], $data['customer_id'], $data['order_date'], $data['delivery_date'],
                         $data['suit_type'], $data['stitch_type'], $data['cloth_source'],
                         $data['stock_item_id'] ?: null, $data['meters_used'] ?: null, $data['brand_name'],
-                        $data['stitching_price'], $data['total_price'], $data['advance_paid'],
+                        $data['stitching_price'],
+                        $data['stitching_type_id'] ?: null, $data['stitching_type_name'] ?: null,
+                        $data['button_type_id'] ?: null, $data['button_type_name'] ?: null, $data['button_price'] ?? 0,
+                        $data['pancha_type_id'] ?: null, $data['pancha_type_name'] ?: null, $data['pancha_price'] ?? 0,
+                        $data['total_price'], $data['advance_paid'],
                         $data['remaining'], $data['status'], $data['notes'], $userId
                     ]);
                     $orderId = (int)$db->lastInsertId();
@@ -233,14 +239,12 @@ function saveOrder(array $data, array $measurements): int {
 
         // Stock reconciliation.
         if ($isEdit) {
-            // Restore old stock and record credit entry for audit trail.
             if ($oldClothSource === 'shop' && $oldStockItemId && $oldMetersUsed > 0) {
                 $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                    ->execute([$oldMetersUsed, $oldStockItemId]);
                 $db->prepare("INSERT INTO stock_transactions (stock_item_id, order_id, transaction_type, meters, notes) VALUES (?,?,'credit',?,?)")
                    ->execute([$oldStockItemId, $orderId, $oldMetersUsed, 'Edit reversal for order #' . $orderId]);
             }
-            // Deduct new stock and record debit entry.
             if ($newStockItemId && $newMetersUsed > 0) {
                 $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                    ->execute([$newMetersUsed, $newStockItemId]);
@@ -248,7 +252,6 @@ function saveOrder(array $data, array $measurements): int {
                    ->execute([$newStockItemId, $orderId, $newMetersUsed, 'Edit update for order #' . $orderId]);
             }
         } else {
-            // New order: deduct and record debit entry.
             if ($newStockItemId && $newMetersUsed > 0) {
                 $db->prepare("UPDATE stock_items SET available_meters = available_meters - ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
                    ->execute([$newMetersUsed, $newStockItemId]);
@@ -297,10 +300,6 @@ function getStockItems(): array {
 function saveStockItem(array $data): void {
     $db = getDB();
     if (!empty($data['id'])) {
-        // available_meters is intentionally editable by admins as a manual override
-        // (e.g. to correct physical stock counts after cutting wastage or theft).
-        // Deductions and restorations driven by orders are handled separately via
-        // saveOrder() transactions to preserve the audit trail in stock_transactions.
         $db->prepare("UPDATE stock_items SET brand_name=?, cloth_type=?, total_meters=?, available_meters=?, cost_per_meter=?, sell_per_meter=?, notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
            ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $data['id']]);
     } else {
@@ -314,17 +313,97 @@ function deleteStockItem(int $id): void {
     $db->prepare("DELETE FROM stock_items WHERE id=?")->execute([$id]);
 }
 
+// ---- Stitching Types ----
+
+function getStitchingTypes(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM stitching_types ORDER BY price")->fetchAll();
+}
+
+function saveStitchingType(array $data): void {
+    $db = getDB();
+    $name  = trim($data['name'] ?? '');
+    $price = (float)($data['price'] ?? 0);
+    if ($name === '') throw new \InvalidArgumentException('Stitching type name is required.');
+    if (!empty($data['id'])) {
+        $db->prepare("UPDATE stitching_types SET name=?, price=? WHERE id=?")
+           ->execute([$name, $price, (int)$data['id']]);
+    } else {
+        $db->prepare("INSERT INTO stitching_types (name, price) VALUES (?,?)")
+           ->execute([$name, $price]);
+    }
+}
+
+function deleteStitchingType(int $id): void {
+    $db = getDB();
+    $db->prepare("DELETE FROM stitching_types WHERE id=?")->execute([$id]);
+}
+
+// ---- Button Types ----
+
+function getButtonTypes(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM button_types ORDER BY name")->fetchAll();
+}
+
+function saveButtonType(array $data): void {
+    $db = getDB();
+    $name  = trim($data['name'] ?? '');
+    $price = (float)($data['price'] ?? 0);
+    if ($name === '') throw new \InvalidArgumentException('Button type name is required.');
+    if (!empty($data['id'])) {
+        $db->prepare("UPDATE button_types SET name=?, price=? WHERE id=?")
+           ->execute([$name, $price, (int)$data['id']]);
+    } else {
+        $db->prepare("INSERT INTO button_types (name, price) VALUES (?,?)")
+           ->execute([$name, $price]);
+    }
+}
+
+function deleteButtonType(int $id): void {
+    $db = getDB();
+    $db->prepare("DELETE FROM button_types WHERE id=?")->execute([$id]);
+}
+
+// ---- Pancha Types ----
+
+function getPanchaTypes(): array {
+    $db = getDB();
+    return $db->query("SELECT * FROM pancha_types ORDER BY name")->fetchAll();
+}
+
+function savePanchaType(array $data): void {
+    $db = getDB();
+    $name  = trim($data['name'] ?? '');
+    $price = (float)($data['price'] ?? 0);
+    if ($name === '') throw new \InvalidArgumentException('Pancha type name is required.');
+    if (!empty($data['id'])) {
+        $db->prepare("UPDATE pancha_types SET name=?, price=? WHERE id=?")
+           ->execute([$name, $price, (int)$data['id']]);
+    } else {
+        $db->prepare("INSERT INTO pancha_types (name, price) VALUES (?,?)")
+           ->execute([$name, $price]);
+    }
+}
+
+function deletePanchaType(int $id): void {
+    $db = getDB();
+    $db->prepare("DELETE FROM pancha_types WHERE id=?")->execute([$id]);
+}
+
+// ---- Dashboard & Reports ----
+
 function getDashboardStats(): array {
     $db = getDB();
     $stats = [];
-    $stats['total_orders'] = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-    $stats['pending_orders'] = $db->query("SELECT COUNT(*) FROM orders WHERE status='pending'")->fetchColumn();
-    $stats['ready_orders'] = $db->query("SELECT COUNT(*) FROM orders WHERE status='ready'")->fetchColumn();
-    $stats['delivered_orders'] = $db->query("SELECT COUNT(*) FROM orders WHERE status='delivered'")->fetchColumn();
-    $stats['total_sales'] = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders")->fetchColumn();
-    $stats['total_advance'] = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
+    $stats['total_orders']    = $db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+    $stats['pending_orders']  = $db->query("SELECT COUNT(*) FROM orders WHERE status='pending'")->fetchColumn();
+    $stats['ready_orders']    = $db->query("SELECT COUNT(*) FROM orders WHERE status='ready'")->fetchColumn();
+    $stats['delivered_orders']= $db->query("SELECT COUNT(*) FROM orders WHERE status='delivered'")->fetchColumn();
+    $stats['total_sales']     = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders")->fetchColumn();
+    $stats['total_advance']   = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
     $stats['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
-    $stats['recent_orders'] = $db->query("
+    $stats['recent_orders']   = $db->query("
         SELECT o.*, c.name as customer_name, c.phone as customer_phone FROM orders o
         LEFT JOIN customers c ON c.id=o.customer_id
         ORDER BY o.created_at DESC LIMIT 10
@@ -340,7 +419,6 @@ function getReportData(): array {
     $data['total_advance']   = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
     $data['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
 
-    // Calculate cloth cost from current order data so edits never overstate cost.
     $data['stock_cost'] = $db->query("
         SELECT COALESCE(SUM(o.meters_used * si.cost_per_meter), 0)
         FROM orders o

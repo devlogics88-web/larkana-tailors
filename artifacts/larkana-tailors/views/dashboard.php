@@ -1,6 +1,6 @@
 <?php $stats = getDashboardStats(); ?>
 <div class="page-header">
-  <h2>&#128202; Dashboard (ڈیش بورڈ)</h2>
+  <h2>&#128202; Dashboard</h2>
   <span class="small"><?= date('l, d-M-Y') ?></span>
 </div>
 
@@ -30,17 +30,17 @@
 <?php if (isAdmin()): ?>
 <div class="stats-grid">
   <div class="stat-box">
-    <div class="stat-label">Total Sales (کل فروخت)</div>
+    <div class="stat-label">Total Sales</div>
     <div class="stat-value bold" style="font-size:16px;"><?= formatMoney($stats['total_sales']) ?></div>
     <div class="stat-sub">All Orders</div>
   </div>
   <div class="stat-box green">
-    <div class="stat-label">Advance Received (ایڈوانس)</div>
+    <div class="stat-label">Advance Received</div>
     <div class="stat-value bold" style="font-size:16px;"><?= formatMoney($stats['total_advance']) ?></div>
     <div class="stat-sub">Collected</div>
   </div>
   <div class="stat-box red">
-    <div class="stat-label">Remaining (باقی)</div>
+    <div class="stat-label">Remaining</div>
     <div class="stat-value bold" style="font-size:16px;"><?= formatMoney($stats['total_remaining']) ?></div>
     <div class="stat-sub">Outstanding</div>
   </div>
@@ -59,7 +59,7 @@
 
 <div class="card">
   <div class="card-head">
-    &#128196; Recent Orders (حالیہ آرڈرز)
+    &#128196; Recent Orders
     <a href="?page=order_new" class="btn btn-success btn-sm" style="float:right;">+ New Order</a>
   </div>
   <div class="card-body" style="padding:0;">
@@ -70,7 +70,7 @@
       <thead>
         <tr>
           <th>Order #</th>
-          <th>Customer (کسٹمر)</th>
+          <th>Customer</th>
           <th>Phone</th>
           <th>Date</th>
           <th>Delivery</th>

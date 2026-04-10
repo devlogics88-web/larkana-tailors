@@ -4,7 +4,7 @@ $status = $_GET['status'] ?? '';
 $orders = getOrders(['search' => $search, 'status' => $status]);
 ?>
 <div class="page-header">
-  <h2>&#128196; All Orders (تمام آرڈرز)</h2>
+  <h2>&#128196; All Orders</h2>
   <a href="?page=order_new" class="btn btn-success btn-sm">+ New Order</a>
 </div>
 <?php if ($msg = flash('order_ok')): ?>
@@ -21,10 +21,10 @@ $orders = getOrders(['search' => $search, 'status' => $status]);
       <input type="text" name="search" value="<?= h($search) ?>" placeholder="Search order#, customer name or phone..." style="flex:1; min-width:200px; padding:5px 8px; border:1px solid #ccc; font-size:13px;">
       <select name="status" style="padding:5px; border:1px solid #ccc; font-size:13px;">
         <option value="">All Status</option>
-        <option value="pending" <?= $status==='pending'?'selected':'' ?>>Pending</option>
-        <option value="ready" <?= $status==='ready'?'selected':'' ?>>Ready</option>
-        <option value="delivered" <?= $status==='delivered'?'selected':'' ?>>Delivered</option>
-        <option value="cancelled" <?= $status==='cancelled'?'selected':'' ?>>Cancelled</option>
+        <option value="pending"   <?= $status==='pending'   ?'selected':'' ?>>Pending</option>
+        <option value="ready"     <?= $status==='ready'     ?'selected':'' ?>>Ready</option>
+        <option value="delivered" <?= $status==='delivered' ?'selected':'' ?>>Delivered</option>
+        <option value="cancelled" <?= $status==='cancelled' ?'selected':'' ?>>Cancelled</option>
       </select>
       <button type="submit" class="btn btn-primary">&#128269; Filter</button>
       <a href="?page=orders" class="btn" style="background:#78909c;color:#fff;">Clear</a>
@@ -41,7 +41,7 @@ $orders = getOrders(['search' => $search, 'status' => $status]);
       <thead>
         <tr>
           <th>Order #</th>
-          <th>Customer (کسٹمر)</th>
+          <th>Customer</th>
           <th>Phone</th>
           <th>Suit Type</th>
           <th>Order Date</th>

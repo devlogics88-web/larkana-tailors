@@ -2,7 +2,7 @@
 $data = getReportData();
 ?>
 <div class="page-header">
-  <h2>&#128200; Reports &amp; Summary (رپورٹس)</h2>
+  <h2>&#128200; Reports &amp; Summary</h2>
   <span class="small">Admin Only &mdash; <?= date('d-M-Y') ?></span>
 </div>
 
@@ -12,15 +12,15 @@ $data = getReportData();
     <div class="stat-value"><?= h($data['total_orders']) ?></div>
   </div>
   <div class="stat-box green">
-    <div class="stat-label">Total Sales (کل فروخت)</div>
+    <div class="stat-label">Total Sales</div>
     <div class="stat-value" style="font-size:16px;"><?= formatMoney($data['total_sales']) ?></div>
   </div>
   <div class="stat-box">
-    <div class="stat-label">Advance Received (ایڈوانس)</div>
+    <div class="stat-label">Advance Received</div>
     <div class="stat-value" style="font-size:16px;"><?= formatMoney($data['total_advance']) ?></div>
   </div>
   <div class="stat-box red">
-    <div class="stat-label">Outstanding (باقی)</div>
+    <div class="stat-label">Outstanding</div>
     <div class="stat-value" style="font-size:16px;"><?= formatMoney($data['total_remaining']) ?></div>
   </div>
 </div>
@@ -28,7 +28,7 @@ $data = getReportData();
 <div class="form-grid-2" style="align-items:start;">
 
 <div class="card">
-  <div class="card-head">&#128178; Profit / Loss Estimate (منافع / نقصان)</div>
+  <div class="card-head">&#128178; Profit / Loss Estimate</div>
   <div class="card-body">
     <table>
       <tr><th style="width:60%;">Description</th><th>Amount</th></tr>
@@ -68,7 +68,7 @@ $data = getReportData();
 
 <?php if (!empty($data['monthly'])): ?>
 <div class="card">
-  <div class="card-head">&#128197; Monthly Summary (ماہانہ خلاصہ)</div>
+  <div class="card-head">&#128197; Monthly Summary</div>
   <div class="card-body" style="padding:0;">
     <table>
       <thead>
