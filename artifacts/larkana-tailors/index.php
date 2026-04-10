@@ -60,53 +60,42 @@ if ($action) {
                     throw new RuntimeException('Please select or add a customer.');
                 }
 
-                // Resolve stitching type
+                // Resolve stitching type — always from DB, never from POST
                 $stitchingTypeId   = (int)($_POST['stitching_type_id'] ?? 0) ?: null;
                 $stitchingTypeName = null;
                 if ($stitchingTypeId) {
-                    $db = getDB();
-                    $stRow = $db->prepare("SELECT name FROM stitching_types WHERE id=?")->execute([$stitchingTypeId]) ? null : null;
-                    $stStmt = $db->prepare("SELECT name FROM stitching_types WHERE id=?");
+                    $stStmt = getDB()->prepare("SELECT name FROM stitching_types WHERE id=?");
                     $stStmt->execute([$stitchingTypeId]);
                     $stRow = $stStmt->fetch();
                     $stitchingTypeName = $stRow ? $stRow['name'] : null;
                 }
 
-                // Resolve button type
+                // Resolve button type — price always from DB
                 $buttonTypeId   = (int)($_POST['button_type_id'] ?? 0) ?: null;
                 $buttonTypeName = null;
                 $buttonPrice    = 0.0;
                 if ($buttonTypeId) {
-                    $db = getDB();
-                    $btStmt = $db->prepare("SELECT name, price FROM button_types WHERE id=?");
+                    $btStmt = getDB()->prepare("SELECT name, price FROM button_types WHERE id=?");
                     $btStmt->execute([$buttonTypeId]);
                     $btRow = $btStmt->fetch();
                     if ($btRow) {
                         $buttonTypeName = $btRow['name'];
-                        $buttonPrice    = (float)($btRow['price']);
+                        $buttonPrice    = (float)$btRow['price'];
                     }
                 }
-                // Allow admin-submitted button_price override
-                if (isset($_POST['button_price']) && $_POST['button_price'] !== '') {
-                    $buttonPrice = (float)$_POST['button_price'];
-                }
 
-                // Resolve pancha type
+                // Resolve pancha type — price always from DB
                 $panchaTypeId   = (int)($_POST['pancha_type_id'] ?? 0) ?: null;
                 $panchaTypeName = null;
                 $panchaPrice    = 0.0;
                 if ($panchaTypeId) {
-                    $db = getDB();
-                    $ptStmt = $db->prepare("SELECT name, price FROM pancha_types WHERE id=?");
+                    $ptStmt = getDB()->prepare("SELECT name, price FROM pancha_types WHERE id=?");
                     $ptStmt->execute([$panchaTypeId]);
                     $ptRow = $ptStmt->fetch();
                     if ($ptRow) {
                         $panchaTypeName = $ptRow['name'];
-                        $panchaPrice    = (float)($ptRow['price']);
+                        $panchaPrice    = (float)$ptRow['price'];
                     }
-                }
-                if (isset($_POST['pancha_price']) && $_POST['pancha_price'] !== '') {
-                    $panchaPrice = (float)$_POST['pancha_price'];
                 }
 
                 $measurements = [
