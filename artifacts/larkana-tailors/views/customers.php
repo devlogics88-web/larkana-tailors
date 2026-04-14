@@ -120,10 +120,16 @@ $csrfToken = getCsrf();
             <a href="?page=customer_orders&customer_id=<?= h($c['id']) ?>" class="btn btn-info btn-sm">Orders</a>
             <a href="?page=order_new&prefill_customer=<?= h($c['id']) ?>" class="btn btn-success btn-sm">+ Order</a>
             <button type="button" class="btn btn-sm" style="background:#0277bd;color:#fff;"
-                    onclick="openEditModal(<?= (int)$c['id'] ?>, <?= json_encode($c['name']) ?>, <?= json_encode($c['phone'] ?? '') ?>, <?= json_encode($c['address'] ?? '') ?>)">Edit</button>
+                    data-cid="<?= (int)$c['id'] ?>"
+                    data-name="<?= h($c['name']) ?>"
+                    data-phone="<?= h($c['phone'] ?? '') ?>"
+                    data-address="<?= h($c['address'] ?? '') ?>"
+                    onclick="openEditModalBtn(this)">Edit</button>
             <?php if (isAdmin()): ?>
             <button type="button" class="btn btn-danger btn-sm"
-                    onclick="deleteCustomer(<?= (int)$c['id'] ?>, <?= json_encode($c['name']) ?>)">Del</button>
+                    data-cid="<?= (int)$c['id'] ?>"
+                    data-name="<?= h($c['name']) ?>"
+                    onclick="deleteCustomerBtn(this)">Del</button>
             <?php endif; ?>
           </td>
         </tr>
@@ -190,15 +196,37 @@ function saveNewCustomer() {
         .catch(function(){ msgEl.textContent = 'Network error.'; msgEl.style.display='block'; });
 }
 
+function openEditModalBtn(btn) {
+    openEditModal(
+        parseInt(btn.getAttribute('data-cid')),
+        btn.getAttribute('data-name') || '',
+        btn.getAttribute('data-phone') || '',
+        btn.getAttribute('data-address') || ''
+    );
+}
+
+function deleteCustomerBtn(btn) {
+    deleteCustomer(parseInt(btn.getAttribute('data-cid')), btn.getAttribute('data-name') || '');
+}
+
 function openEditModal(id, name, phone, address) {
-    document.getElementById('ec_id').value      = id;
-    document.getElementById('ec_name').value    = name;
-    document.getElementById('ec_phone').value   = phone || '';
-    document.getElementById('ec_address').value = address || '';
-    document.getElementById('edit-cust-msg').style.display = 'none';
-    var ov = document.getElementById('edit-overlay');
+    var ov   = document.getElementById('edit-overlay');
+    var ecId = document.getElementById('ec_id');
+    var ecNm = document.getElementById('ec_name');
+    var ecPh = document.getElementById('ec_phone');
+    var ecAd = document.getElementById('ec_address');
+    var ecMs = document.getElementById('edit-cust-msg');
+    if (!ov || !ecId || !ecNm || !ecPh || !ecAd) {
+        alert('Edit modal not found in page. Please refresh and try again.');
+        return;
+    }
+    ecId.value = id;
+    ecNm.value = name;
+    ecPh.value = phone || '';
+    ecAd.value = address || '';
+    if (ecMs) ecMs.style.display = 'none';
     ov.style.display = 'flex';
-    document.getElementById('ec_name').focus();
+    ecNm.focus();
 }
 
 function closeEditModal() {
