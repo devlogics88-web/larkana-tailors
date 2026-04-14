@@ -487,7 +487,8 @@ function getCustomersWithBalance(string $search = ''): array {
         SELECT c.id, c.name, c.phone, c.address,
                COALESCE(o.order_count, 0) AS order_count,
                COALESCE(o.total_outstanding, 0) AS total_outstanding,
-               COALESCE(o.total_cleared, 0) AS total_cleared
+               COALESCE(o.total_cleared, 0) AS total_cleared,
+               CASE WHEN COALESCE(o.total_outstanding, 0) > 0 THEN 1 ELSE 0 END AS has_arrears
         FROM customers c
         LEFT JOIN (
             SELECT customer_id,
@@ -505,6 +506,10 @@ function getCustomersWithBalance(string $search = ''): array {
     ");
     $stmt->execute($params);
     return $stmt->fetchAll();
+}
+
+function searchCustomersWithBalance(string $query): array {
+    return getCustomersWithBalance($query);
 }
 
 function getCustomerOrders(int $customerId): array {

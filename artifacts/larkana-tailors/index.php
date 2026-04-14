@@ -314,6 +314,7 @@ if ($action) {
                 'outstanding' => (float)$c['total_outstanding'],
                 'cleared'     => (float)$c['total_cleared'],
                 'order_count' => (int)$c['order_count'],
+                'has_arrears' => (int)$c['has_arrears'],
             ], $rows));
             exit;
 
