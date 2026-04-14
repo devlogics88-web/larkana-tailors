@@ -51,27 +51,35 @@ $sidebarCustomers = $isNewOrder ? getCustomersWithBalance() : [];
     </div>
 
     <!-- Add / Edit Customer Form -->
-    <div id="sb-add-form" style="display:none; background:#1a2c3a; border-top:1px solid #2f4a5f; border-bottom:1px solid #2f4a5f; padding:8px 6px;">
+    <form id="sb-add-form" method="POST" action="?action=save_customer_only"
+          style="display:none; background:#1a2c3a; border-top:1px solid #2f4a5f; border-bottom:1px solid #2f4a5f; padding:8px 6px;">
+      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+      <input type="hidden" name="customer_id" id="sb_edit_id" value="">
       <div style="font-size:11px; font-weight:bold; color:#ffd54f; margin-bottom:5px;" id="sb-form-title">New Customer</div>
-      <input type="hidden" id="sb_edit_id" value="">
-      <input type="text" id="sb_name" placeholder="Name *"
+      <input type="text" name="name" id="sb_name" placeholder="Name *"
              style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:4px; border-radius:2px;">
-      <input type="text" id="sb_phone" placeholder="Phone"
+      <input type="text" name="phone" id="sb_phone" placeholder="Phone"
              style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:4px; border-radius:2px;">
-      <input type="text" id="sb_address" placeholder="Address"
+      <input type="text" name="address" id="sb_address" placeholder="Address"
              style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:6px; border-radius:2px;">
       <div id="sb-form-msg" style="font-size:11px; color:#ef9a9a; margin-bottom:4px; display:none;"></div>
-      <div style="display:flex; gap:4px;">
-        <button type="button" onclick="saveCustomerSidebar()"
-                style="flex:1; padding:5px 0; font-size:12px; font-weight:bold; background:#1565c0; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-          &#10003; Save
-        </button>
-        <button type="button" onclick="hideAddForm()"
-                style="padding:5px 10px; font-size:12px; background:#546e7a; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-          Cancel
+      <div style="display:flex; gap:4px; flex-direction:column;">
+        <div style="display:flex; gap:4px;">
+          <button type="button" onclick="saveCustomerSidebar()"
+                  style="flex:1; padding:5px 0; font-size:11px; font-weight:bold; background:#1565c0; color:#fff; border:none; cursor:pointer; border-radius:2px;">
+            &#10003; Save to List
+          </button>
+          <button type="button" onclick="hideAddForm()"
+                  style="padding:5px 10px; font-size:11px; background:#546e7a; color:#fff; border:none; cursor:pointer; border-radius:2px;">
+            Cancel
+          </button>
+        </div>
+        <button type="submit"
+                style="width:100%; padding:5px 0; font-size:11px; font-weight:bold; background:#2e7d32; color:#fff; border:none; cursor:pointer; border-radius:2px;">
+          &#8594; Save Customer Only (No Order)
         </button>
       </div>
-    </div>
+    </form>
 
     <!-- Customer List -->
     <div id="cust-list" style="overflow-y:auto; flex:1;">
@@ -461,6 +469,7 @@ $sidebarCustomers = $isNewOrder ? getCustomersWithBalance() : [];
 
 <script>
 var stockData = <?= $stockJson ?>;
+var csrfToken = '<?= h(getCsrf()) ?>';
 
 <?php if ($isNewOrder): ?>
 // ===== SIDEBAR LOGIC =====
@@ -515,6 +524,7 @@ function saveCustomerSidebar() {
     msgEl.style.display = 'none';
 
     var fd = new FormData();
+    fd.append('csrf', csrfToken);
     fd.append('name', name);
     fd.append('phone', phone);
     fd.append('address', address);
@@ -616,6 +626,7 @@ function clearSelectedCustomer() {
 function deleteSidebarCustomer(id, name) {
     if (!confirm('Delete customer "' + name + '" and ALL their orders? This cannot be undone.')) return;
     var fd = new FormData();
+    fd.append('csrf', csrfToken);
     fd.append('customer_id', id);
     fetch('?action=delete_customer_ajax', { method: 'POST', body: fd })
         .then(function(r){ return r.json(); })
@@ -748,7 +759,11 @@ function calcTotal() {
         clothDisplay.style.display = 'none';
     }
 
-    var stitching = stitchEl  ? parseFloat(stitchEl.value  || '0') : 0;
+    // Only include stitching price if a stitching type is actually selected
+    var stTypeEl = document.getElementById('stitching_type_id');
+    var hasStitchingType = stTypeEl && stTypeEl.value;
+    if (!hasStitchingType && stitchEl) stitchEl.value = 0;
+    var stitching = (hasStitchingType && stitchEl) ? parseFloat(stitchEl.value || '0') : 0;
     var button    = buttonEl  ? parseFloat(buttonEl.value  || '0') : 0;
     var pancha    = panchaEl  ? parseFloat(panchaEl.value  || '0') : 0;
     var discount  = discountEl ? parseFloat(discountEl.value || '0') : 0;

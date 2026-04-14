@@ -498,7 +498,9 @@ function getCustomersWithBalance(string $search = ''): array {
             GROUP BY customer_id
         ) o ON o.customer_id = c.id
         $whereClause
-        ORDER BY COALESCE(o.total_outstanding,0) DESC, c.name ASC
+        ORDER BY
+            CASE WHEN COALESCE(o.total_outstanding,0) > 0 THEN 0 ELSE 1 END ASC,
+            c.name ASC
         LIMIT 300
     ");
     $stmt->execute($params);

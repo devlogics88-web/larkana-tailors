@@ -71,6 +71,20 @@ $data = getReportData();
           <?= $data['estimated_profit'] >= 0 ? ' &#9650;' : ' &#9660;' ?>
         </td>
       </tr>
+      <tr><td colspan="2" style="background:#e3f2fd; padding:3px 8px; font-size:10px; color:#555; font-weight:bold;">Cash Collection Breakdown</td></tr>
+      <tr><td>Advance Payments Received</td><td class="bold green"><?= formatMoney($data['total_advance']) ?></td></tr>
+      <tr>
+        <td>Dues Cleared / Collected <span style="font-size:10px; color:#888;">(arrears paid later)</span></td>
+        <td class="bold gold"><?= formatMoney($data['total_cleared_dues'] ?? 0) ?></td>
+      </tr>
+      <tr style="background:#f3e5f5;">
+        <td class="bold">Total Cash Collected <span style="font-weight:normal;font-size:11px;">(Advance + Cleared Dues)</span></td>
+        <td class="bold" style="color:#6a1b9a; font-size:14px;"><?= formatMoney($data['total_cash_collected'] ?? 0) ?></td>
+      </tr>
+      <tr>
+        <td class="bold red">Outstanding Arrears <span style="font-weight:normal;font-size:11px;">(unpaid remaining)</span></td>
+        <td class="bold red"><?= formatMoney($data['total_remaining']) ?></td>
+      </tr>
     </table>
     <p class="small" style="margin-top:6px;">* Estimated only. Stitching labour cost not included.</p>
   </div>

@@ -155,7 +155,7 @@ if ($action) {
                         'stock_item_id'       => $clothSource === 'shop' ? (int)($_POST['stock_item_id'] ?? 0) : null,
                         'meters_used'         => $clothSource === 'shop' ? (float)($_POST['meters_used'] ?? 0) : null,
                         'brand_name'          => $_POST['brand_name'] ?? '',
-                        'stitching_price'     => $stitchingPriceFromType ?? (float)getSetting('default_stitching_price', '2300'),
+                        'stitching_price'     => $stitchingPriceFromType ?? max(0.0, (float)($_POST['stitching_price'] ?? 0)),
                         'stitching_type_id'   => $stitchingTypeId,
                         'stitching_type_name' => $stitchingTypeName,
                         'button_type_id'      => $buttonTypeId,
@@ -321,16 +321,36 @@ if ($action) {
             requireLogin();
             header('Content-Type: application/json');
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success'=>false,'error'=>'POST required']); exit; }
+            // CSRF check for AJAX (return JSON error instead of dying)
+            $sessionTok = $_SESSION['csrf_token'] ?? '';
+            $postedTok  = $_POST['csrf'] ?? '';
+            if (!$sessionTok || !$postedTok || !hash_equals($sessionTok, $postedTok)) {
+                echo json_encode(['success'=>false,'error'=>'Invalid security token. Please refresh and try again.']);
+                exit;
+            }
             try {
                 $cid = saveCustomer([
                     'id'      => (int)($_POST['customer_id'] ?? 0) ?: null,
                     'name'    => trim($_POST['name'] ?? ''),
                     'phone'   => trim($_POST['phone'] ?? ''),
                     'address' => trim($_POST['address'] ?? ''),
-                    'notes'   => trim($_POST['notes'] ?? ''),
+                    'notes'   => '',
                 ]);
                 $c = getCustomer($cid);
-                echo json_encode(['success'=>true,'id'=>$cid,'name'=>$c['name'],'phone'=>$c['phone']??'','address'=>$c['address']??'','outstanding'=>0,'order_count'=>0]);
+                // Get outstanding from DB
+                $db2 = getDB();
+                $outs = $db2->prepare("SELECT COALESCE(SUM(CASE WHEN COALESCE(dues_cleared,0)=0 THEN COALESCE(remaining,0) ELSE 0 END),0) AS outs, COUNT(*) AS cnt FROM orders WHERE customer_id=?");
+                $outs->execute([$cid]);
+                $outRow = $outs->fetch();
+                echo json_encode([
+                    'success'     => true,
+                    'id'          => $cid,
+                    'name'        => $c['name'],
+                    'phone'       => $c['phone'] ?? '',
+                    'address'     => $c['address'] ?? '',
+                    'outstanding' => (float)($outRow['outs'] ?? 0),
+                    'order_count' => (int)($outRow['cnt'] ?? 0),
+                ]);
             } catch (\InvalidArgumentException $e) {
                 echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
             } catch (PDOException $e) {
@@ -342,6 +362,13 @@ if ($action) {
             requireAdmin();
             header('Content-Type: application/json');
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success'=>false,'error'=>'POST required']); exit; }
+            // CSRF check for AJAX
+            $sessionTok = $_SESSION['csrf_token'] ?? '';
+            $postedTok  = $_POST['csrf'] ?? '';
+            if (!$sessionTok || !$postedTok || !hash_equals($sessionTok, $postedTok)) {
+                echo json_encode(['success'=>false,'error'=>'Invalid security token. Please refresh and try again.']);
+                exit;
+            }
             $cid = (int)($_POST['customer_id'] ?? 0);
             if (!$cid) { echo json_encode(['success'=>false,'error'=>'Invalid customer ID']); exit; }
             try {
@@ -349,6 +376,32 @@ if ($action) {
                 echo json_encode(['success'=>true]);
             } catch (Exception $e) {
                 echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+            }
+            exit;
+
+        case 'save_customer_only':
+            requireLogin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=order_new'); exit; }
+            verifyCsrf();
+            $cName    = trim($_POST['name'] ?? '');
+            $cPhone   = trim($_POST['phone'] ?? '');
+            $cAddress = trim($_POST['address'] ?? '');
+            $editId   = (int)($_POST['customer_id'] ?? 0) ?: null;
+            if ($cName !== '') {
+                try {
+                    $cid = saveCustomer(['id'=>$editId, 'name'=>$cName, 'phone'=>$cPhone, 'address'=>$cAddress, 'notes'=>'']);
+                    flash('customer_ok', 'Customer "' . $cName . '" saved. Select them from the list to create an order.');
+                    header("Location: ?page=order_new&prefill_customer=$cid");
+                } catch (\InvalidArgumentException $e) {
+                    flash('customer_err', $e->getMessage());
+                    header('Location: ?page=order_new');
+                } catch (PDOException $e) {
+                    flash('customer_err', 'Database error saving customer.');
+                    header('Location: ?page=order_new');
+                }
+            } else {
+                flash('customer_err', 'Customer name is required.');
+                header('Location: ?page=order_new');
             }
             exit;
 
