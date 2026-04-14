@@ -309,17 +309,20 @@ function getStockItems(): array {
 
 function saveStockItem(array $data): void {
     $db = getDB();
-    $hasBox     = (int)(bool)($data['has_box'] ?? 0);
-    $boxQty     = $hasBox ? (float)($data['box_quantity'] ?? 0) : 0;
-    $boxPrice   = $hasBox ? (float)($data['box_price'] ?? 0) : 0;
-    $stockDate  = !empty($data['stock_date']) ? $data['stock_date'] : date('Y-m-d');
+
+    // sell_mode: 'meter', 'box', or 'both'
+    $sellMode  = in_array($data['sell_mode'] ?? '', ['meter','box','both'], true) ? $data['sell_mode'] : 'meter';
+    $hasBox    = ($sellMode === 'box' || $sellMode === 'both') ? 1 : 0;
+    $boxQty    = $hasBox ? (float)($data['box_quantity'] ?? 0) : 0;
+    $boxPrice  = $hasBox ? (float)($data['box_price'] ?? 0) : 0;
+    $stockDate = !empty($data['stock_date']) ? $data['stock_date'] : date('Y-m-d');
 
     if (!empty($data['id'])) {
-        $db->prepare("UPDATE stock_items SET brand_name=?, cloth_type=?, total_meters=?, available_meters=?, cost_per_meter=?, sell_per_meter=?, notes=?, stock_date=?, has_box=?, box_quantity=?, box_price=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $stockDate, $hasBox, $boxQty, $boxPrice, $data['id']]);
+        $db->prepare("UPDATE stock_items SET brand_name=?, cloth_type=?, total_meters=?, available_meters=?, cost_per_meter=?, sell_per_meter=?, notes=?, stock_date=?, has_box=?, box_quantity=?, box_price=?, sell_mode=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $stockDate, $hasBox, $boxQty, $boxPrice, $sellMode, $data['id']]);
     } else {
-        $db->prepare("INSERT INTO stock_items (brand_name, cloth_type, total_meters, available_meters, cost_per_meter, sell_per_meter, notes, stock_date, has_box, box_quantity, box_price) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
-           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $stockDate, $hasBox, $boxQty, $boxPrice]);
+        $db->prepare("INSERT INTO stock_items (brand_name, cloth_type, total_meters, available_meters, cost_per_meter, sell_per_meter, notes, stock_date, has_box, box_quantity, box_price, sell_mode) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+           ->execute([$data['brand_name'], $data['cloth_type'], $data['total_meters'], $data['available_meters'], $data['cost_per_meter'], $data['sell_per_meter'] ?: null, $data['notes'], $stockDate, $hasBox, $boxQty, $boxPrice, $sellMode]);
     }
 }
 
@@ -330,7 +333,7 @@ function exportStockCsv(): void {
     header('Content-Disposition: attachment; filename="larkana-stock-' . date('Y-m-d') . '.csv"');
     header('Cache-Control: no-cache');
     $out = fopen('php://output', 'w');
-    fputcsv($out, ['ID','Brand Name','Cloth Type','Stock Date','Total Meters','Available Meters','Cost/Meter','Sell/Meter','Has Box','Box Quantity','Box Price','Notes','Added On']);
+    fputcsv($out, ['ID','Brand Name','Cloth Type','Stock Date','Total Meters','Available Meters','Cost/Meter','Sell/Meter','Sell Mode (meter/box/both)','Box Quantity','Box Price','Notes','Added On']);
     foreach ($items as $r) {
         fputcsv($out, [
             $r['id'],
@@ -341,7 +344,7 @@ function exportStockCsv(): void {
             $r['available_meters'],
             $r['cost_per_meter'],
             $r['sell_per_meter'] ?? '',
-            $r['has_box'] ? 'Yes' : 'No',
+            $r['sell_mode'] ?? 'meter',
             $r['box_quantity'] ?? 0,
             $r['box_price'] ?? 0,
             $r['notes'] ?? '',

@@ -5,7 +5,8 @@ $buttonTypes = getButtonTypes();
 <div class="page-header">
   <h2>&#128229; Stock Management</h2>
   <div style="display:flex;gap:8px;">
-    <a href="?action=export_stock_csv" class="btn btn-sm" style="background:#1565c0;color:#fff;">&#11015; Export CSV</a>
+    <a href="?action=export_stock_csv" class="btn btn-sm" style="background:#1565c0;color:#fff;">&#11015; Download CSV</a>
+    <button type="button" class="btn btn-sm" style="background:#0d47a1;color:#fff;" onclick="toggleImport()">&#11014; Import CSV</button>
   </div>
 </div>
 
@@ -16,20 +17,23 @@ $buttonTypes = getButtonTypes();
 <div class="alert alert-error"><?= h($err) ?></div>
 <?php endif; ?>
 
-<!-- IMPORT CSV -->
-<div class="card" id="import-card" style="display:none;">
+<!-- IMPORT CSV PANEL -->
+<div class="card" id="import-card" style="display:none; margin-bottom:12px;">
   <div class="card-head" style="background:#0d47a1;color:#fff;">&#11014; Import Stock from CSV</div>
   <div class="card-body">
     <p style="margin-bottom:8px;color:#546e7a;font-size:12px;">
-      CSV must have columns: <strong>Brand Name, Cloth Type, Stock Date, Total Meters, Available Meters, Cost/Meter, Sell/Meter, Has Box (Yes/No), Box Quantity, Box Price, Notes</strong>.<br>
-      First row is treated as header and skipped. Existing items are NOT overwritten.
+      CSV must have columns:
+      <strong>ID (ignored), Brand Name, Cloth Type, Stock Date, Total Meters, Available Meters, Cost/Meter, Sell/Meter, Sell Mode (meter/box/both), Box Quantity, Box Price, Notes</strong>.<br>
+      First row (header) is skipped automatically. Existing items are NOT overwritten &mdash; only new rows are added.
     </p>
     <form method="POST" action="?action=import_stock_csv" enctype="multipart/form-data">
       <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="file" name="csv_file" accept=".csv,text/csv" required style="border:1px solid var(--border);padding:4px;background:#fff;color:#333;font-size:12px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="file" name="csv_file" accept=".csv,text/csv" required
+               style="border:1px solid var(--border);padding:4px;background:#fff;color:#333;font-size:12px;">
         <button type="submit" class="btn btn-success btn-sm">&#11014; Import</button>
-        <button type="button" class="btn btn-sm" style="background:#546e7a;color:#fff;" onclick="document.getElementById('import-card').style.display='none'">Cancel</button>
+        <button type="button" class="btn btn-sm" style="background:#546e7a;color:#fff;"
+                onclick="toggleImport()">Cancel</button>
       </div>
     </form>
   </div>
@@ -39,12 +43,9 @@ $buttonTypes = getButtonTypes();
 
 <!-- ADD/EDIT CLOTH STOCK FORM -->
 <div class="card" id="stock-form">
-  <div class="card-head">
+  <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;">
     <span id="stock_form_title">Add New Stock Item</span>
-    <div style="float:right;display:flex;gap:6px;">
-      <button type="button" class="btn btn-sm" style="background:#0d47a1;color:#fff;" onclick="toggleImport()">&#11014; Import CSV</button>
-      <a href="#" onclick="resetStock();return false;" class="btn btn-sm" style="background:#78909c;color:#fff;">&#8635; Reset</a>
-    </div>
+    <a href="#" onclick="resetStock();return false;" class="btn btn-sm" style="background:#78909c;color:#fff;">&#8635; Reset</a>
   </div>
   <div class="card-body">
     <form method="POST" action="?action=save_stock">
@@ -53,7 +54,7 @@ $buttonTypes = getButtonTypes();
       <div class="form-grid-2 mb-8">
         <div class="form-group">
           <label>Brand Name *</label>
-          <input type="text" name="brand_name" id="brand_name" required placeholder="e.g. Pasha, Gul Ahmed, J.">
+          <input type="text" name="brand_name" id="brand_name" required placeholder="e.g. Pasha, Gul Ahmed">
         </div>
         <div class="form-group">
           <label>Cloth Type</label>
@@ -61,41 +62,58 @@ $buttonTypes = getButtonTypes();
         </div>
       </div>
       <div class="form-group mb-8">
-        <label>Date of Stock</label>
+        <label>Date of Stock Received</label>
         <input type="date" name="stock_date" id="stock_date" value="<?= date('Y-m-d') ?>">
       </div>
-      <div class="form-grid-2 mb-8">
-        <div class="form-group">
-          <label>Total Meters *</label>
-          <input type="number" name="total_meters" id="total_meters" step="0.5" min="0" required placeholder="e.g. 100">
-        </div>
-        <div class="form-group">
-          <label>Available Meters *</label>
-          <input type="number" name="avail_meters" id="avail_meters" step="0.5" min="0" required placeholder="e.g. 80">
-        </div>
-      </div>
-      <div class="form-grid-2 mb-8">
-        <div class="form-group">
-          <label>Cost / Meter Rs.</label>
-          <input type="number" name="cost_meter" id="cost_meter" step="1" min="0" placeholder="e.g. 350">
-        </div>
-        <div class="form-group">
-          <label>Sell / Meter Rs.</label>
-          <input type="number" name="sell_meter" id="sell_meter" step="1" min="0" placeholder="e.g. 500">
+
+      <!-- SELL BY — 3-state radio -->
+      <div class="form-group mb-8">
+        <label style="font-weight:bold;">Sell By</label>
+        <div style="display:flex;gap:16px;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;">
+            <input type="radio" name="sell_mode" id="sm_meter" value="meter" checked onchange="onSellModeChange()">
+            Meter
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;">
+            <input type="radio" name="sell_mode" id="sm_box" value="box" onchange="onSellModeChange()">
+            Box
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal;">
+            <input type="radio" name="sell_mode" id="sm_both" value="both" onchange="onSellModeChange()">
+            Both (Meter &amp; Box)
+          </label>
         </div>
       </div>
 
-      <!-- BOX SECTION -->
-      <div class="form-group mb-8">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" name="has_box" id="has_box" value="1" onchange="toggleBoxFields()">
-          <strong>This stock also sells in Box Sets</strong>
-        </label>
+      <!-- METER FIELDS — shown when sell_mode = meter or both -->
+      <div id="meter-fields">
+        <div class="form-grid-2 mb-8">
+          <div class="form-group">
+            <label>Total Meters</label>
+            <input type="number" name="total_meters" id="total_meters" step="0.5" min="0" placeholder="e.g. 100">
+          </div>
+          <div class="form-group">
+            <label>Available Meters</label>
+            <input type="number" name="avail_meters" id="avail_meters" step="0.5" min="0" placeholder="e.g. 80">
+          </div>
+        </div>
+        <div class="form-grid-2 mb-8">
+          <div class="form-group">
+            <label>Cost / Meter Rs.</label>
+            <input type="number" name="cost_meter" id="cost_meter" step="1" min="0" placeholder="e.g. 350">
+          </div>
+          <div class="form-group">
+            <label>Sell / Meter Rs.</label>
+            <input type="number" name="sell_meter" id="sell_meter" step="1" min="0" placeholder="e.g. 500">
+          </div>
+        </div>
       </div>
+
+      <!-- BOX FIELDS — shown when sell_mode = box or both -->
       <div id="box-fields" style="display:none; background:#e8f5e9; padding:8px; border:1px solid #a5d6a7; margin-bottom:8px;">
         <div class="form-grid-2">
           <div class="form-group">
-            <label>Box Quantity (suits/pieces per box)</label>
+            <label>Box Qty (suits / pieces per box)</label>
             <input type="number" name="box_quantity" id="box_quantity" step="0.5" min="0" placeholder="e.g. 5">
           </div>
           <div class="form-group">
@@ -127,40 +145,59 @@ $buttonTypes = getButtonTypes();
           <th>Brand</th>
           <th>Type</th>
           <th>Date</th>
-          <th>Avail M</th>
+          <th>Sell By</th>
+          <th>Meters</th>
+          <th>Box Info</th>
           <th>Cost/M</th>
-          <th>Sell/M</th>
-          <th>Box</th>
-          <th>Value</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($stocks as $s):
-          $low = $s['available_meters'] < 5;
-          $hasBox = (int)($s['has_box'] ?? 0);
+          $low      = (float)$s['available_meters'] < 5;
+          $sellMode = $s['sell_mode'] ?? 'meter';
         ?>
         <tr>
           <td class="bold"><?= h($s['brand_name']) ?></td>
           <td><?= h($s['cloth_type'] ?? '-') ?></td>
-          <td style="white-space:nowrap;font-size:11px;"><?= $s['stock_date'] ? date('d-M-Y', strtotime($s['stock_date'])) : '-' ?></td>
-          <td class="<?= $low ? 'red bold' : 'green bold' ?>"><?= h($s['available_meters']) ?>m <?= $low ? '&#9888;' : '' ?></td>
-          <td><?= $s['cost_per_meter'] ? formatMoney($s['cost_per_meter']) : '-' ?></td>
-          <td><?= $s['sell_per_meter'] ? formatMoney($s['sell_per_meter']) : '-' ?></td>
-          <td style="font-size:11px;">
-            <?php if ($hasBox): ?>
-            <span style="color:#2e7d32;font-weight:bold;">&#9744; Yes</span><br>
-            <span style="color:#555;"><?= h($s['box_quantity'] ?? 0) ?> pcs @ <?= formatMoney($s['box_price'] ?? 0) ?></span>
+          <td style="white-space:nowrap;font-size:11px;">
+            <?= $s['stock_date'] ? date('d-M-Y', strtotime($s['stock_date'])) : '-' ?>
+          </td>
+          <td>
+            <?php if ($sellMode === 'meter'): ?>
+              <span style="background:#1565c0;color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">Meter</span>
+            <?php elseif ($sellMode === 'box'): ?>
+              <span style="background:#2e7d32;color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">Box</span>
             <?php else: ?>
-            <span style="color:#999;">-</span>
+              <span style="background:#6a1b9a;color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;">Both</span>
             <?php endif; ?>
           </td>
-          <td><?= formatMoney($s['available_meters'] * $s['cost_per_meter']) ?></td>
+          <td>
+            <?php if ($sellMode !== 'box'): ?>
+              <span class="<?= $low ? 'red bold' : 'green bold' ?>"><?= h($s['available_meters']) ?>m</span>
+              <?= $low ? ' &#9888;' : '' ?>
+              <?php if ($s['sell_per_meter']): ?>
+                <br><span style="font-size:10px;color:#555;">@ <?= formatMoney($s['sell_per_meter']) ?>/m</span>
+              <?php endif; ?>
+            <?php else: ?>
+              <span style="color:#999;font-size:11px;">N/A</span>
+            <?php endif; ?>
+          </td>
+          <td style="font-size:11px;">
+            <?php if ($sellMode === 'box' || $sellMode === 'both'): ?>
+              <strong><?= h($s['box_quantity'] ?? 0) ?></strong> pcs<br>
+              <span style="color:#2e7d32;font-weight:bold;"><?= formatMoney($s['box_price'] ?? 0) ?></span>/box
+            <?php else: ?>
+              <span style="color:#999;">-</span>
+            <?php endif; ?>
+          </td>
+          <td><?= $s['cost_per_meter'] ? formatMoney($s['cost_per_meter']) : '-' ?></td>
           <td style="white-space:nowrap;">
             <a href="#" class="btn btn-info btn-sm"
                data-stock="<?= h(json_encode($s, JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_TAG|JSON_HEX_AMP)) ?>"
                onclick="editStockFromData(this);return false;">Edit</a>
-            <form method="POST" action="?action=delete_stock" style="display:inline;" onsubmit="return confirmDelete('Delete stock item: <?= h($s['brand_name']) ?>?')">
+            <form method="POST" action="?action=delete_stock" style="display:inline;"
+                  onsubmit="return confirm('Delete stock item: <?= h($s['brand_name']) ?>?')">
               <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
               <input type="hidden" name="id"   value="<?= h($s['id']) ?>">
               <button type="submit" class="btn btn-danger btn-sm">Del</button>
@@ -181,9 +218,9 @@ $buttonTypes = getButtonTypes();
 
 <!-- ADD/EDIT BUTTON TYPE FORM -->
 <div class="card" id="btn-form">
-  <div class="card-head">
+  <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;">
     <span id="btn_form_title">Add Button Type</span>
-    <a href="#" onclick="resetBtn();return false;" class="btn btn-sm" style="float:right;background:#78909c;color:#fff;">&#8635; Reset</a>
+    <a href="#" onclick="resetBtn();return false;" class="btn btn-sm" style="background:#78909c;color:#fff;">&#8635; Reset</a>
   </div>
   <div class="card-body">
     <form method="POST" action="?action=save_button_type">
@@ -251,7 +288,7 @@ $buttonTypes = getButtonTypes();
   <div class="card-head" style="background:#c62828; color:#fff;">&#9888; Danger Zone — Delete All Stocks</div>
   <div class="card-body">
     <p style="color:#c62828; font-weight:bold; margin-bottom:8px;">
-      WARNING: This will permanently delete ALL stock items and all stock transactions. Orders will be updated to self-cloth. This cannot be undone.
+      WARNING: This will permanently delete ALL stock items. This cannot be undone.
     </p>
     <button type="button" class="btn btn-danger" onclick="showDeleteAllStocks()">&#128465; Delete All Stocks</button>
     <div id="delete-stocks-confirm" style="display:none; margin-top:12px; background:#fff3e0; padding:10px; border:1px solid #e65100;">
@@ -259,9 +296,10 @@ $buttonTypes = getButtonTypes();
       <form method="POST" action="?action=delete_all_stocks" onsubmit="return validateStockDelete(this)">
         <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
         <input type="text" name="confirm_word" id="confirm_word_stocks" autocomplete="off"
-               style="width:100px; margin-right:8px; font-size:14px; font-weight:bold; letter-spacing:2px;" placeholder="OK">
+               style="width:100px;margin-right:8px;font-size:14px;font-weight:bold;letter-spacing:2px;" placeholder="OK">
         <button type="submit" class="btn btn-danger">Confirm Delete All Stocks</button>
-        <button type="button" class="btn" style="background:#546e7a;color:#fff;" onclick="document.getElementById('delete-stocks-confirm').style.display='none'">Cancel</button>
+        <button type="button" class="btn" style="background:#546e7a;color:#fff;"
+                onclick="document.getElementById('delete-stocks-confirm').style.display='none'">Cancel</button>
       </form>
     </div>
   </div>
@@ -273,11 +311,15 @@ function toggleImport() {
     var c = document.getElementById('import-card');
     c.style.display = c.style.display === 'none' ? 'block' : 'none';
 }
-function toggleBoxFields() {
-    var cb = document.getElementById('has_box');
-    var box = document.getElementById('box-fields');
-    box.style.display = cb && cb.checked ? 'block' : 'none';
+
+function onSellModeChange() {
+    var mf  = document.getElementById('meter-fields');
+    var bf  = document.getElementById('box-fields');
+    var val = document.querySelector('input[name="sell_mode"]:checked')?.value || 'meter';
+    mf.style.display = (val === 'meter' || val === 'both') ? '' : 'none';
+    bf.style.display = (val === 'box'   || val === 'both') ? '' : 'none';
 }
+
 function showDeleteAllStocks() {
     document.getElementById('delete-stocks-confirm').style.display = 'block';
     document.getElementById('confirm_word_stocks').focus();
@@ -290,6 +332,7 @@ function validateStockDelete(form) {
     }
     return confirm('FINAL WARNING: All stock data will be permanently deleted. Proceed?');
 }
+
 function resetStock() {
     document.getElementById('stock_id').value = '';
     document.getElementById('stock_form_title').textContent = 'Add New Stock Item';
@@ -297,10 +340,11 @@ function resetStock() {
         var el = document.getElementById(id); if(el) el.value = '';
     });
     document.getElementById('stock_date').value = '<?= date('Y-m-d') ?>';
-    var cb = document.getElementById('has_box');
-    if (cb) cb.checked = false;
-    toggleBoxFields();
+    var r = document.getElementById('sm_meter');
+    if (r) r.checked = true;
+    onSellModeChange();
 }
+
 function editStockFromData(el) {
     var s = JSON.parse(el.getAttribute('data-stock'));
     document.getElementById('stock_id').value       = s.id;
@@ -313,13 +357,16 @@ function editStockFromData(el) {
     document.getElementById('cost_meter').value     = s.cost_per_meter || '';
     document.getElementById('sell_meter').value     = s.sell_per_meter || '';
     document.getElementById('stock_notes').value    = s.notes || '';
-    var cb = document.getElementById('has_box');
-    if (cb) { cb.checked = !!parseInt(s.has_box); }
     document.getElementById('box_quantity').value   = s.box_quantity || '';
     document.getElementById('box_price').value      = s.box_price || '';
-    toggleBoxFields();
+
+    var mode = s.sell_mode || 'meter';
+    var radio = document.querySelector('input[name="sell_mode"][value="' + mode + '"]');
+    if (radio) radio.checked = true;
+    onSellModeChange();
     document.getElementById('stock-form').scrollIntoView({behavior:'smooth'});
 }
+
 function resetBtn() {
     document.getElementById('bt_id').value = '';
     document.getElementById('bt_name').value = '';
@@ -333,5 +380,4 @@ function editBtnFromData(el) {
     document.getElementById('btn_form_title').textContent = 'Edit Button Type';
     document.getElementById('btn-form').scrollIntoView({behavior:'smooth'});
 }
-function confirmDelete(msg) { return confirm(msg); }
 </script>

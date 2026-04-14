@@ -193,6 +193,7 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE stock_items ADD COLUMN has_box INTEGER DEFAULT 0",
         "ALTER TABLE stock_items ADD COLUMN box_quantity REAL DEFAULT 0",
         "ALTER TABLE stock_items ADD COLUMN box_price REAL DEFAULT 0",
+        "ALTER TABLE stock_items ADD COLUMN sell_mode TEXT DEFAULT 'meter'",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}
