@@ -431,7 +431,20 @@ function getReportData(): array {
     $data['total_sales']     = $db->query("SELECT COALESCE(SUM(total_price),0) FROM orders")->fetchColumn();
     $data['total_discounts'] = $db->query("SELECT COALESCE(SUM(COALESCE(discount,0)),0) FROM orders")->fetchColumn();
     $data['total_advance']   = $db->query("SELECT COALESCE(SUM(advance_paid),0) FROM orders")->fetchColumn();
-    $data['total_remaining'] = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders")->fetchColumn();
+    $data['total_remaining']     = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders WHERE COALESCE(dues_cleared,0)=0")->fetchColumn();
+    $data['total_cleared_dues']  = $db->query("SELECT COALESCE(SUM(remaining),0) FROM orders WHERE COALESCE(dues_cleared,0)=1")->fetchColumn();
+    $data['total_cash_collected']= (float)$data['total_advance'] + (float)$data['total_cleared_dues'];
+
+    $data['arrears_customers'] = $db->query("
+        SELECT c.id, c.name, c.phone,
+               SUM(CASE WHEN COALESCE(o.dues_cleared,0)=0 THEN COALESCE(o.remaining,0) ELSE 0 END) AS outstanding
+        FROM customers c
+        JOIN orders o ON o.customer_id = c.id
+        WHERE COALESCE(o.dues_cleared,0)=0 AND COALESCE(o.remaining,0) > 0
+        GROUP BY c.id
+        ORDER BY outstanding DESC
+        LIMIT 10
+    ")->fetchAll();
 
     $data['stock_cost'] = $db->query("
         SELECT COALESCE(SUM(o.meters_used * si.cost_per_meter), 0)
@@ -459,6 +472,84 @@ function getReportData(): array {
     $data['workers'] = $db->query("SELECT * FROM users WHERE role='worker' ORDER BY full_name")->fetchAll();
 
     return $data;
+}
+
+function getCustomersWithBalance(string $search = ''): array {
+    $db = getDB();
+    $params = [];
+    $whereClause = '';
+    if ($search !== '') {
+        $like = '%' . $search . '%';
+        $whereClause = 'WHERE c.name LIKE ? OR c.phone LIKE ?';
+        $params = [$like, $like];
+    }
+    $stmt = $db->prepare("
+        SELECT c.id, c.name, c.phone, c.address,
+               COALESCE(o.order_count, 0) AS order_count,
+               COALESCE(o.total_outstanding, 0) AS total_outstanding,
+               COALESCE(o.total_cleared, 0) AS total_cleared
+        FROM customers c
+        LEFT JOIN (
+            SELECT customer_id,
+                   COUNT(*) AS order_count,
+                   SUM(CASE WHEN COALESCE(dues_cleared,0)=0 THEN COALESCE(remaining,0) ELSE 0 END) AS total_outstanding,
+                   SUM(CASE WHEN COALESCE(dues_cleared,0)=1 THEN COALESCE(remaining,0) ELSE 0 END) AS total_cleared
+            FROM orders
+            GROUP BY customer_id
+        ) o ON o.customer_id = c.id
+        $whereClause
+        ORDER BY COALESCE(o.total_outstanding,0) DESC, c.name ASC
+        LIMIT 300
+    ");
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function getCustomerOrders(int $customerId): array {
+    $db = getDB();
+    $stmt = $db->prepare("
+        SELECT id, order_no, order_date, delivery_date, suit_type, stitching_type_name,
+               total_price, advance_paid, remaining, dues_cleared, cleared_at, status, notes
+        FROM orders WHERE customer_id=? ORDER BY created_at DESC
+    ");
+    $stmt->execute([$customerId]);
+    return $stmt->fetchAll();
+}
+
+function clearOrderDues(int $orderId): void {
+    $db = getDB();
+    $stmt = $db->prepare("SELECT id, remaining, dues_cleared FROM orders WHERE id=?");
+    $stmt->execute([$orderId]);
+    $order = $stmt->fetch();
+    if (!$order) throw new RuntimeException('Order not found.');
+    if ((int)$order['dues_cleared'] === 1) throw new RuntimeException('Dues already cleared for this order.');
+    if ((float)$order['remaining'] <= 0) throw new RuntimeException('No outstanding amount to clear for this order.');
+    $userId = $_SESSION['user_id'] ?? 0;
+    $db->prepare("UPDATE orders SET dues_cleared=1, cleared_at=CURRENT_TIMESTAMP, cleared_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+       ->execute([$userId, $orderId]);
+}
+
+function deleteCustomer(int $id): void {
+    $db = getDB();
+    $db->beginTransaction();
+    try {
+        $orders = $db->prepare("SELECT id, cloth_source, stock_item_id, meters_used FROM orders WHERE customer_id=?");
+        $orders->execute([$id]);
+        foreach ($orders->fetchAll() as $o) {
+            if ($o['cloth_source'] === 'shop' && $o['stock_item_id'] && (float)($o['meters_used'] ?? 0) > 0) {
+                $db->prepare("UPDATE stock_items SET available_meters = available_meters + ?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
+                   ->execute([$o['meters_used'], $o['stock_item_id']]);
+                $db->prepare("DELETE FROM stock_transactions WHERE order_id=?")->execute([$o['id']]);
+            }
+            $db->prepare("DELETE FROM measurements WHERE order_id=?")->execute([$o['id']]);
+        }
+        $db->prepare("DELETE FROM orders WHERE customer_id=?")->execute([$id]);
+        $db->prepare("DELETE FROM customers WHERE id=?")->execute([$id]);
+        $db->commit();
+    } catch (Exception $e) {
+        $db->rollBack();
+        throw $e;
+    }
 }
 
 function deleteAllCustomers(): void {

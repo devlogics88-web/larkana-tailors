@@ -237,6 +237,67 @@ tr:nth-child(even):hover td { background: var(--blue-lt); }
 .inv-footer { text-align: center; font-size: 10px; margin-top: 6px; color: #555; }
 .copy-title { text-align: center; font-size: 11px; font-weight: bold; background: #212121; color: #fff; padding: 2px 0; margin-bottom: 4px; }
 
+/* CUSTOMER SIDEBAR (New Order two-column layout) */
+.cust-sidebar {
+  width: 265px;
+  min-width: 265px;
+  background: #1B242D;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 36px;
+  height: calc(100vh - 36px);
+  border-right: 2px solid #2f4a5f;
+  flex-shrink: 0;
+}
+.cust-sidebar-head {
+  background: #253240;
+  color: #ffd54f;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 8px 10px;
+  border-bottom: 1px solid #2f4a5f;
+  letter-spacing: .3px;
+}
+.cust-row {
+  padding: 6px 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #253240;
+  transition: background .1s;
+}
+.cust-row:hover { background: #253240; }
+.cust-row.selected { background: #1a3a55; border-left: 3px solid #ffd54f; }
+.cust-row.has-arrears .cust-row-name { color: #ef9a9a; }
+.cust-row.all-paid .cust-row-name { color: #a5d6a7; }
+.cust-row-name { font-size: 12px; font-weight: bold; }
+.cust-row-phone { font-size: 10px; color: #7a95a8; margin-top: 1px; }
+.cust-row-actions { margin-top: 4px; display: flex; gap: 3px; }
+.cust-act-btn {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: Arial, sans-serif;
+  text-decoration: none;
+}
+.badge-arrears {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ef9a9a;
+  white-space: nowrap;
+}
+.badge-paid {
+  display: inline-block;
+  font-size: 10px;
+  color: #a5d6a7;
+  font-weight: bold;
+}
+
 /* LOGIN */
 .login-wrap {
   max-width: 380px; margin: 60px auto; background: #fff;

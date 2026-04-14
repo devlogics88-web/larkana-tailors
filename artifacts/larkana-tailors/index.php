@@ -301,6 +301,77 @@ if ($action) {
             echo json_encode($slim);
             exit;
 
+        case 'get_customers_sidebar':
+            requireLogin();
+            header('Content-Type: application/json');
+            $q = trim($_GET['q'] ?? '');
+            $rows = getCustomersWithBalance($q);
+            echo json_encode(array_map(fn($c) => [
+                'id'          => (int)$c['id'],
+                'name'        => $c['name'],
+                'phone'       => $c['phone'] ?? '',
+                'address'     => $c['address'] ?? '',
+                'outstanding' => (float)$c['total_outstanding'],
+                'cleared'     => (float)$c['total_cleared'],
+                'order_count' => (int)$c['order_count'],
+            ], $rows));
+            exit;
+
+        case 'save_customer_ajax':
+            requireLogin();
+            header('Content-Type: application/json');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success'=>false,'error'=>'POST required']); exit; }
+            try {
+                $cid = saveCustomer([
+                    'id'      => (int)($_POST['customer_id'] ?? 0) ?: null,
+                    'name'    => trim($_POST['name'] ?? ''),
+                    'phone'   => trim($_POST['phone'] ?? ''),
+                    'address' => trim($_POST['address'] ?? ''),
+                    'notes'   => trim($_POST['notes'] ?? ''),
+                ]);
+                $c = getCustomer($cid);
+                echo json_encode(['success'=>true,'id'=>$cid,'name'=>$c['name'],'phone'=>$c['phone']??'','address'=>$c['address']??'','outstanding'=>0,'order_count'=>0]);
+            } catch (\InvalidArgumentException $e) {
+                echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+            } catch (PDOException $e) {
+                echo json_encode(['success'=>false,'error'=>'Database error. Please try again.']);
+            }
+            exit;
+
+        case 'delete_customer_ajax':
+            requireAdmin();
+            header('Content-Type: application/json');
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(['success'=>false,'error'=>'POST required']); exit; }
+            $cid = (int)($_POST['customer_id'] ?? 0);
+            if (!$cid) { echo json_encode(['success'=>false,'error'=>'Invalid customer ID']); exit; }
+            try {
+                deleteCustomer($cid);
+                echo json_encode(['success'=>true]);
+            } catch (Exception $e) {
+                echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+            }
+            exit;
+
+        case 'clear_dues':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=customers'); exit; }
+            verifyCsrf();
+            $orderId = (int)($_POST['order_id'] ?? 0);
+            $backUrl = trim($_POST['back_url'] ?? '?page=customers');
+            if ($orderId) {
+                try {
+                    clearOrderDues($orderId);
+                    flash('customer_ok', 'Dues cleared for order. Payment marked as received.');
+                } catch (RuntimeException $e) {
+                    flash('customer_err', $e->getMessage());
+                } catch (PDOException $e) {
+                    flash('customer_err', 'Database error. Please try again.');
+                }
+            }
+            $customerId = (int)($_POST['customer_id'] ?? 0);
+            header('Location: ' . ($customerId ? "?page=customer_orders&customer_id=$customerId" : '?page=customers'));
+            exit;
+
         case 'save_stock':
             requireAdmin();
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }

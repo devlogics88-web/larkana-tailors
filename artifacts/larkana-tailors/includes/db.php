@@ -79,6 +79,9 @@ function initSchema(PDO $pdo): void {
             remaining REAL DEFAULT 0,
             payment_method TEXT DEFAULT 'Cash',
             receiving_hand TEXT,
+            dues_cleared INTEGER DEFAULT 0,
+            cleared_at TEXT,
+            cleared_by INTEGER,
             status TEXT DEFAULT 'pending',
             notes TEXT,
             created_by INTEGER,
@@ -183,6 +186,9 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE orders ADD COLUMN receiving_hand TEXT",
         "ALTER TABLE measurements ADD COLUMN harmol TEXT",
         "ALTER TABLE measurements ADD COLUMN chak_patti_button TEXT",
+        "ALTER TABLE orders ADD COLUMN dues_cleared INTEGER DEFAULT 0",
+        "ALTER TABLE orders ADD COLUMN cleared_at TEXT",
+        "ALTER TABLE orders ADD COLUMN cleared_by INTEGER",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}
