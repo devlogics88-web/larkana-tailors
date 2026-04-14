@@ -25,6 +25,10 @@ $isNewOrder = !$isEdit && !$isPrefill;
 $_restoredCustomerId  = $isNewOrder ? (int)($order['customer_id'] ?? 0) : 0;
 $_restoredCustomerLbl = $isNewOrder ? h($order['customer_name'] ?? '') : '';
 $_showCustomerPanel   = $_restoredCustomerId > 0;
+$_restoredNewName     = $isNewOrder ? h($order['_post_new_name']  ?? '') : '';
+$_restoredNewPhone    = $isNewOrder ? h($order['_post_new_phone'] ?? '') : '';
+$_restoredNewAddr     = $isNewOrder ? h($order['_post_new_addr']  ?? '') : '';
+$_showNewSection      = $isNewOrder && !empty($order['_post_new_name']);
 ?>
 
 <!-- PAGE HEADER -->
@@ -82,15 +86,37 @@ $_showCustomerPanel   = $_restoredCustomerId > 0;
       <span id="customer_name_display"><?= $_restoredCustomerLbl ?></span>
       <a href="#" onclick="clearCustSearch(); return false;" style="margin-left:10px; color:#c62828; font-size:11px;">[Change]</a>
     </div>
-    <div id="customer_search_wrap" style="<?= $_showCustomerPanel ? 'display:none;' : '' ?>">
+    <div id="customer_search_wrap" style="<?= ($_showCustomerPanel || $_showNewSection) ? 'display:none;' : '' ?>">
       <div class="search-box" style="margin:0 0 4px;">
         <input type="text" id="customer_search_q" placeholder="Search customer by name or phone..."
                oninput="searchCustomer()" autocomplete="off">
-        <a href="?page=customers" class="btn btn-sm" style="background:#546e7a;color:#fff; white-space:nowrap;">&#128101; Manage Customers</a>
+        <button type="button" class="btn btn-success btn-sm" onclick="openNewCustomerSection()" style="white-space:nowrap;">&#43; New Customer</button>
       </div>
       <div id="customer_results" class="search-results" style="display:none;"></div>
       <div style="font-size:11px; color:#9e9e9e; margin-top:4px;">
-        Type a name or phone number to find customer &mdash; or <a href="?page=customers" style="color:#4fc3f7;">go to Customers</a> to add a new one.
+        Type to search existing customer, or click <strong>+ New Customer</strong> to add one inline.
+      </div>
+    </div>
+
+    <!-- INLINE NEW CUSTOMER FORM -->
+    <div id="new_customer_section" style="display:<?= $_showNewSection ? 'block' : 'none' ?>; background:#e8f5e9; border:1px solid #a5d6a7; padding:8px; margin-top:4px;">
+      <div style="font-size:11px; font-weight:bold; color:#2e7d32; margin-bottom:6px;">
+        &#43; New Customer Details
+        <a href="#" onclick="closeNewCustomerSection();return false;" style="margin-left:12px; color:#c62828; font-size:11px; font-weight:normal;">[Cancel]</a>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" name="new_name" id="new_name_inp" placeholder="Customer Full Name" value="<?= $_restoredNewName ?>">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" name="new_phone" id="new_phone_inp" placeholder="0300-0000000" value="<?= $_restoredNewPhone ?>">
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <input type="text" name="new_address" id="new_addr_inp" placeholder="Address / Area" value="<?= $_restoredNewAddr ?>">
+        </div>
       </div>
     </div>
   </div>
@@ -411,6 +437,8 @@ function selectCustomer(id, name, phone) {
     if (panel) panel.style.display = 'block';
     var wrap = document.getElementById('customer_search_wrap');
     if (wrap) wrap.style.display = 'none';
+    var ncs = document.getElementById('new_customer_section');
+    if (ncs) ncs.style.display = 'none';
     var res = document.getElementById('customer_results');
     if (res) { res.innerHTML=''; res.style.display='none'; }
 }
@@ -418,12 +446,35 @@ function selectCustomer(id, name, phone) {
 function clearCustSearch() {
     document.getElementById('customer_id').value = '';
     document.getElementById('customer_panel').style.display = 'none';
+    var ncs = document.getElementById('new_customer_section');
+    if (ncs) ncs.style.display = 'none';
     var wrap = document.getElementById('customer_search_wrap');
     if (wrap) wrap.style.display = '';
     var q = document.getElementById('customer_search_q');
     if (q) { q.value = ''; q.focus(); }
     var res = document.getElementById('customer_results');
     if (res) { res.innerHTML=''; res.style.display='none'; }
+}
+
+function openNewCustomerSection() {
+    var wrap = document.getElementById('customer_search_wrap');
+    if (wrap) wrap.style.display = 'none';
+    var ncs = document.getElementById('new_customer_section');
+    if (ncs) ncs.style.display = 'block';
+    var inp = document.getElementById('new_name_inp');
+    if (inp) inp.focus();
+}
+
+function closeNewCustomerSection() {
+    var ncs = document.getElementById('new_customer_section');
+    if (ncs) { ncs.style.display = 'none'; }
+    var inp1 = document.getElementById('new_name_inp');  if (inp1) inp1.value = '';
+    var inp2 = document.getElementById('new_phone_inp'); if (inp2) inp2.value = '';
+    var inp3 = document.getElementById('new_addr_inp');  if (inp3) inp3.value = '';
+    var wrap = document.getElementById('customer_search_wrap');
+    if (wrap) wrap.style.display = '';
+    var q = document.getElementById('customer_search_q');
+    if (q) q.focus();
 }
 
 function toggleClothSource(val) {
