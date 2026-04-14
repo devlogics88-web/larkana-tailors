@@ -25,109 +25,7 @@ $isNewOrder = !$isEdit && !$isPrefill;
 $_restoredCustomerId  = $isNewOrder ? (int)($order['customer_id'] ?? 0) : 0;
 $_restoredCustomerLbl = $isNewOrder ? h($order['customer_name'] ?? '') : '';
 $_showCustomerPanel   = $_restoredCustomerId > 0;
-
-// Sidebar data for new order
-$sidebarCustomers = $isNewOrder ? getCustomersWithBalance() : [];
 ?>
-<?php if ($isNewOrder): ?>
-<!-- TWO-COLUMN LAYOUT: Sidebar + Form -->
-<div style="display:flex; align-items:flex-start; gap:0; margin:-12px;">
-
-  <!-- ===== LEFT: CUSTOMER SIDEBAR ===== -->
-  <div class="cust-sidebar" id="cust-sidebar">
-    <div class="cust-sidebar-head">&#128101; Customer List</div>
-
-    <div style="padding:6px 6px 4px;">
-      <input type="text" id="sb_search" placeholder="Search name / phone..."
-             oninput="filterCustomers(this.value)"
-             style="width:100%; box-sizing:border-box; padding:5px 7px; border:1px solid #3d5a6e; font-size:12px; background:#253240; color:#e0eaf3; border-radius:2px;">
-    </div>
-
-    <div style="padding:0 6px 6px;">
-      <button type="button" onclick="showAddForm()" id="btn-show-add"
-              style="width:100%; padding:5px 0; font-size:12px; font-weight:bold; background:#2e7d32; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-        &#43; Add Customer
-      </button>
-    </div>
-
-    <!-- Add / Edit Customer Form -->
-    <form id="sb-add-form" method="POST" action="?action=save_customer_only"
-          style="display:none; background:#1a2c3a; border-top:1px solid #2f4a5f; border-bottom:1px solid #2f4a5f; padding:8px 6px;">
-      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
-      <input type="hidden" name="customer_id" id="sb_edit_id" value="">
-      <div style="font-size:11px; font-weight:bold; color:#ffd54f; margin-bottom:5px;" id="sb-form-title">New Customer</div>
-      <input type="text" name="name" id="sb_name" placeholder="Name *"
-             style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:4px; border-radius:2px;">
-      <input type="text" name="phone" id="sb_phone" placeholder="Phone"
-             style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:4px; border-radius:2px;">
-      <input type="text" name="address" id="sb_address" placeholder="Address"
-             style="width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px; border:1px solid #3d5a6e; background:#253240; color:#e0eaf3; margin-bottom:6px; border-radius:2px;">
-      <div id="sb-form-msg" style="font-size:11px; color:#ef9a9a; margin-bottom:4px; display:none;"></div>
-      <div style="display:flex; gap:4px; flex-direction:column;">
-        <div style="display:flex; gap:4px;">
-          <button type="button" onclick="saveCustomerSidebar()"
-                  style="flex:1; padding:5px 0; font-size:11px; font-weight:bold; background:#1565c0; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-            &#10003; Save to List
-          </button>
-          <button type="button" onclick="hideAddForm()"
-                  style="padding:5px 10px; font-size:11px; background:#546e7a; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-            Cancel
-          </button>
-        </div>
-        <button type="submit"
-                style="width:100%; padding:5px 0; font-size:11px; font-weight:bold; background:#2e7d32; color:#fff; border:none; cursor:pointer; border-radius:2px;">
-          &#8594; Save Customer Only (No Order)
-        </button>
-      </div>
-    </form>
-
-    <!-- Customer List -->
-    <div id="cust-list" style="overflow-y:auto; flex:1;">
-      <?php if (empty($sidebarCustomers)): ?>
-      <div style="padding:14px 8px; text-align:center; color:#6a8fa8; font-size:11px;">No customers yet. Add one above.</div>
-      <?php else: foreach ($sidebarCustomers as $c):
-        $outstanding = (float)($c['total_outstanding'] ?? 0);
-      ?>
-      <div class="cust-row <?= (int)($c['has_arrears'] ?? ($outstanding > 0 ? 1 : 0)) ? 'has-arrears' : 'all-paid' ?>"
-           id="cust-row-<?= $c['id'] ?>"
-           data-id="<?= h($c['id']) ?>"
-           data-name="<?= h($c['name']) ?>"
-           data-phone="<?= h($c['phone'] ?? '') ?>"
-           data-address="<?= h($c['address'] ?? '') ?>"
-           data-outstanding="<?= $outstanding ?>"
-           data-has-arrears="<?= (int)($c['has_arrears'] ?? ($outstanding > 0 ? 1 : 0)) ?>"
-           data-search="<?= strtolower($c['name']) . ' ' . strtolower($c['phone'] ?? '') ?>"
-           onclick="selectFromSidebar(<?= (int)$c['id'] ?>, '<?= addslashes($c['name']) ?>', '<?= addslashes($c['phone'] ?? '') ?>', '<?= addslashes($c['address'] ?? '') ?>')">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; gap:4px;">
-          <span class="cust-row-name"><?= h($c['name']) ?></span>
-          <?php if ($outstanding > 0): ?>
-          <span class="badge-arrears">Rs.<?= number_format($outstanding, 0) ?> arrears</span>
-          <?php else: ?>
-          <span class="badge-paid">&#10003; Paid</span>
-          <?php endif; ?>
-        </div>
-        <?php if ($c['phone']): ?>
-        <div class="cust-row-phone"><?= h($c['phone']) ?></div>
-        <?php endif; ?>
-        <div class="cust-row-actions" onclick="event.stopPropagation();">
-          <button type="button" onclick="editCustomerForm(<?= (int)$c['id'] ?>, '<?= addslashes($c['name']) ?>', '<?= addslashes($c['phone'] ?? '') ?>', '<?= addslashes($c['address'] ?? '') ?>')"
-                  class="cust-act-btn" style="background:#0277bd;">Edit</button>
-          <a href="?page=customer_orders&customer_id=<?= (int)$c['id'] ?>"
-             class="cust-act-btn" style="background:#546e7a; text-decoration:none;">Orders</a>
-          <?php if (isAdmin()): ?>
-          <button type="button" onclick="deleteSidebarCustomer(<?= (int)$c['id'] ?>, '<?= addslashes($c['name']) ?>')"
-                  class="cust-act-btn" style="background:#c62828;">Del</button>
-          <?php endif; ?>
-        </div>
-      </div>
-      <?php endforeach; endif; ?>
-    </div>
-  </div>
-  <!-- ===== END SIDEBAR ===== -->
-
-  <!-- ===== RIGHT: ORDER FORM ===== -->
-  <div style="flex:1; min-width:0; padding:12px; overflow-y:auto;">
-<?php endif; ?>
 
 <!-- PAGE HEADER -->
 <div class="page-header">
@@ -175,43 +73,25 @@ $sidebarCustomers = $isNewOrder ? getCustomersWithBalance() : [];
   </div>
 </div>
 <?php else: ?>
-<!-- New Order: customer selected from sidebar -->
+<!-- New Order: customer search -->
 <div class="card">
-  <div class="card-head">&#128101; Selected Customer</div>
+  <div class="card-head">&#128101; Customer</div>
   <div class="card-body">
     <div id="customer_panel" class="customer-panel" style="display:<?= $_showCustomerPanel ? 'block' : 'none' ?>;">
-      <strong>&#10003; Customer Selected:</strong>
+      <strong>&#10003; Customer:</strong>
       <span id="customer_name_display"><?= $_restoredCustomerLbl ?></span>
-      <a href="#" onclick="clearSelectedCustomer(); return false;"
-         style="margin-left:10px; color:#c62828; font-size:11px;">[Clear]</a>
+      <a href="#" onclick="clearCustSearch(); return false;" style="margin-left:10px; color:#c62828; font-size:11px;">[Change]</a>
     </div>
-    <div id="no_customer_msg" style="<?= $_showCustomerPanel ? 'display:none;' : '' ?> color:#9e9e9e; font-size:12px; padding:4px 0;">
-      &#8592; Click a customer from the left panel to select, or add one using + Add Customer above.
-    </div>
-  </div>
-</div>
-
-<!-- CUSTOMER-ONLY SAVE (no order) — dedicated main-form path (JS-submitted to avoid nested form issue) -->
-<div class="card" id="save-customer-only-card" style="<?= $_showCustomerPanel ? 'display:none;' : '' ?>">
-  <div class="card-head" style="background:#2e7d32; color:#fff;">&#128100; Save New Customer Only (No Order Required)</div>
-  <div class="card-body">
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Customer Name *</label>
-        <input type="text" id="so_name" placeholder="Full Name">
+    <div id="customer_search_wrap" style="<?= $_showCustomerPanel ? 'display:none;' : '' ?>">
+      <div class="search-box" style="margin:0 0 4px;">
+        <input type="text" id="customer_search_q" placeholder="Search customer by name or phone..."
+               oninput="searchCustomer()" autocomplete="off">
+        <a href="?page=customers" class="btn btn-sm" style="background:#546e7a;color:#fff; white-space:nowrap;">&#128101; Manage Customers</a>
       </div>
-      <div class="form-group">
-        <label>Phone</label>
-        <input type="text" id="so_phone" placeholder="0300-0000000">
+      <div id="customer_results" class="search-results" style="display:none;"></div>
+      <div style="font-size:11px; color:#9e9e9e; margin-top:4px;">
+        Type a name or phone number to find customer &mdash; or <a href="?page=customers" style="color:#4fc3f7;">go to Customers</a> to add a new one.
       </div>
-      <div class="form-group">
-        <label>Address</label>
-        <input type="text" id="so_address" placeholder="City / Area">
-      </div>
-    </div>
-    <div style="margin-top:6px;">
-      <button type="button" class="btn btn-success btn-sm" onclick="submitCustomerOnly()">&#8594; Save Customer to List (No Order)</button>
-      <span class="small" style="margin-left:10px;">Customer will be added to the list and you can create their order later.</span>
     </div>
   </div>
 </div>
@@ -488,228 +368,29 @@ $sidebarCustomers = $isNewOrder ? getCustomersWithBalance() : [];
 </div>
 </form>
 
-<?php if ($isNewOrder): ?>
-  </div><!-- end right col -->
-</div><!-- end two-col wrapper -->
-<?php endif; ?>
-
 <script>
 var stockData = <?= $stockJson ?>;
 var csrfToken = '<?= h(getCsrf()) ?>';
 
-<?php if ($isNewOrder): ?>
-// ===== SIDEBAR LOGIC =====
-
-function filterCustomers(q) {
-    q = q.toLowerCase().trim();
-    var rows = document.querySelectorAll('#cust-list .cust-row');
-    rows.forEach(function(row) {
-        var search = row.getAttribute('data-search') || '';
-        row.style.display = (!q || search.indexOf(q) !== -1) ? '' : 'none';
-    });
-}
-
-function showAddForm(clearId) {
-    document.getElementById('sb-form-title').textContent = 'New Customer';
-    document.getElementById('sb_edit_id').value = '';
-    document.getElementById('sb_name').value = '';
-    document.getElementById('sb_phone').value = '';
-    document.getElementById('sb_address').value = '';
-    document.getElementById('sb-form-msg').style.display = 'none';
-    document.getElementById('sb-add-form').style.display = 'block';
-    document.getElementById('sb_name').focus();
-}
-
-function hideAddForm() {
-    document.getElementById('sb-add-form').style.display = 'none';
-}
-
-function editCustomerForm(id, name, phone, address) {
-    document.getElementById('sb-form-title').textContent = 'Edit Customer';
-    document.getElementById('sb_edit_id').value = id;
-    document.getElementById('sb_name').value = name;
-    document.getElementById('sb_phone').value = phone;
-    document.getElementById('sb_address').value = address;
-    document.getElementById('sb-form-msg').style.display = 'none';
-    document.getElementById('sb-add-form').style.display = 'block';
-    document.getElementById('sb_name').focus();
-}
-
-function saveCustomerSidebar() {
-    var name = document.getElementById('sb_name').value.trim();
-    var phone = document.getElementById('sb_phone').value.trim();
-    var address = document.getElementById('sb_address').value.trim();
-    var editId = document.getElementById('sb_edit_id').value;
-    var msgEl = document.getElementById('sb-form-msg');
-
-    if (!name) {
-        msgEl.textContent = 'Name is required.';
-        msgEl.style.display = 'block';
-        return;
-    }
-    msgEl.style.display = 'none';
-
-    var fd = new FormData();
-    fd.append('csrf', csrfToken);
-    fd.append('name', name);
-    fd.append('phone', phone);
-    fd.append('address', address);
-    if (editId) fd.append('customer_id', editId);
-
-    fetch('?action=save_customer_ajax', { method: 'POST', body: fd })
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-            if (!data.success) {
-                msgEl.textContent = data.error || 'Error saving customer.';
-                msgEl.style.display = 'block';
-                return;
-            }
-            hideAddForm();
-            // Reload sidebar via AJAX
-            reloadSidebar();
-        })
-        .catch(function() {
-            msgEl.textContent = 'Network error. Please try again.';
-            msgEl.style.display = 'block';
-        });
-}
-
-function reloadSidebar() {
-    fetch('?action=get_customers_sidebar')
-        .then(function(r){ return r.json(); })
-        .then(function(customers) {
-            var list = document.getElementById('cust-list');
-            if (!customers.length) {
-                list.innerHTML = '<div style="padding:14px 8px; text-align:center; color:#6a8fa8; font-size:11px;">No customers yet. Add one above.</div>';
-                return;
-            }
-            var html = '';
-            var isAdmin = <?= isAdmin() ? 'true' : 'false' ?>;
-            customers.forEach(function(c) {
-                var outstanding = c.outstanding || 0;
-                var hasDue = c.has_arrears ? true : (outstanding > 0);
-                var phone = c.phone || '';
-                var address = c.address || '';
-                var safePhone = phone.replace(/'/g, "\\'");
-                var safeName = c.name.replace(/'/g, "\\'");
-                var safeAddr = address.replace(/'/g, "\\'");
-                var search = (c.name + ' ' + phone).toLowerCase();
-
-                html += '<div class="cust-row ' + (hasDue ? 'has-arrears' : 'all-paid') + '"'
-                      + ' id="cust-row-' + c.id + '"'
-                      + ' data-id="' + c.id + '"'
-                      + ' data-name="' + safeName + '"'
-                      + ' data-phone="' + safePhone + '"'
-                      + ' data-address="' + safeAddr + '"'
-                      + ' data-outstanding="' + outstanding + '"'
-                      + ' data-search="' + search + '"'
-                      + ' onclick="selectFromSidebar(' + c.id + ',\'' + safeName + '\',\'' + safePhone + '\',\'' + safeAddr + '\')">'
-                      + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;">'
-                      + '<span class="cust-row-name">' + escHtml(c.name) + '</span>'
-                      + (hasDue ? '<span class="badge-arrears">Rs.' + Math.round(outstanding).toLocaleString() + ' arrears</span>'
-                                : '<span class="badge-paid">&#10003; Paid</span>')
-                      + '</div>';
-                if (phone) html += '<div class="cust-row-phone">' + escHtml(phone) + '</div>';
-                html += '<div class="cust-row-actions" onclick="event.stopPropagation();">'
-                      + '<button type="button" onclick="editCustomerForm(' + c.id + ',\'' + safeName + '\',\'' + safePhone + '\',\'' + safeAddr + '\')" class="cust-act-btn" style="background:#0277bd;">Edit</button>'
-                      + '<a href="?page=customer_orders&customer_id=' + c.id + '" class="cust-act-btn" style="background:#546e7a;text-decoration:none;">Orders</a>';
-                if (isAdmin) {
-                    html += '<button type="button" onclick="deleteSidebarCustomer(' + c.id + ',\'' + safeName + '\')" class="cust-act-btn" style="background:#c62828;">Del</button>';
-                }
-                html += '</div></div>';
-            });
-            list.innerHTML = html;
-        })
-        .catch(function(){ });
-}
-
-function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function selectFromSidebar(id, name, phone, address) {
-    document.getElementById('customer_id').value = id;
-    var label = name + (phone ? ' \u2014 ' + phone : '');
-    document.getElementById('customer_name_display').textContent = label;
-    document.getElementById('customer_panel').style.display = 'block';
-    document.getElementById('no_customer_msg').style.display = 'none';
-    var soCard = document.getElementById('save-customer-only-card');
-    if (soCard) soCard.style.display = 'none';
-
-    // Highlight selected row
-    document.querySelectorAll('.cust-row').forEach(function(r){
-        r.classList.remove('selected');
-    });
-    var row = document.getElementById('cust-row-' + id);
-    if (row) row.classList.add('selected');
-}
-
-function clearSelectedCustomer() {
-    document.getElementById('customer_id').value = '';
-    document.getElementById('customer_panel').style.display = 'none';
-    document.getElementById('no_customer_msg').style.display = '';
-    var soCard = document.getElementById('save-customer-only-card');
-    if (soCard) soCard.style.display = '';
-    document.querySelectorAll('.cust-row').forEach(function(r){ r.classList.remove('selected'); });
-}
-
-function submitCustomerOnly() {
-    var name = (document.getElementById('so_name') || {value:''}).value.trim();
-    if (!name) { alert('Customer name is required.'); return; }
-    var phone   = (document.getElementById('so_phone') || {value:''}).value.trim();
-    var address = (document.getElementById('so_address') || {value:''}).value.trim();
-    var f = document.createElement('form');
-    f.method = 'POST';
-    f.action = '?action=save_customer_only';
-    var fields = { csrf: csrfToken, name: name, phone: phone, address: address };
-    Object.keys(fields).forEach(function(k) {
-        var inp = document.createElement('input');
-        inp.type = 'hidden'; inp.name = k; inp.value = fields[k];
-        f.appendChild(inp);
-    });
-    document.body.appendChild(f);
-    f.submit();
-}
-
-function deleteSidebarCustomer(id, name) {
-    if (!confirm('Delete customer "' + name + '" and ALL their orders? This cannot be undone.')) return;
-    var fd = new FormData();
-    fd.append('csrf', csrfToken);
-    fd.append('customer_id', id);
-    fetch('?action=delete_customer_ajax', { method: 'POST', body: fd })
-        .then(function(r){ return r.json(); })
-        .then(function(data) {
-            if (data.success) {
-                var row = document.getElementById('cust-row-' + id);
-                if (row) row.remove();
-                var cidEl = document.getElementById('customer_id');
-                if (cidEl && cidEl.value == id) clearSelectedCustomer();
-            } else {
-                alert(data.error || 'Error deleting customer.');
-            }
-        })
-        .catch(function(){ alert('Network error.'); });
-}
-<?php endif; ?>
-
-// ===== CUSTOMER SEARCH (legacy, for prefill flow) =====
+// ===== CUSTOMER SEARCH =====
 function searchCustomer() {
     var el = document.getElementById('customer_search_q');
     if (!el) return;
     var q = el.value.trim();
-    if (!q) return;
     var res = document.getElementById('customer_results');
+    if (!res) return;
+    if (q.length < 2) { res.innerHTML=''; res.style.display='none'; return; }
     res.innerHTML = '<div class="search-result-item">Searching...</div>';
     res.style.display = 'block';
     fetch('?action=search_customer&q=' + encodeURIComponent(q))
         .then(function(r){ return r.json(); })
         .then(function(data){
             if (!data.length) {
-                res.innerHTML = '<div class="search-result-item no-result">No customers found.</div>';
+                res.innerHTML = '<div class="search-result-item no-result">No customers found. <a href="?page=customers" style="color:#4fc3f7;">Add a new customer</a> first.</div>';
                 return;
             }
             res.innerHTML = data.map(function(c){
-                return '<div class="search-result-item" onclick="selectCustomer(' + c.id + ',\'' + c.name.replace(/'/g,"\\'") + '\',\'' + (c.phone||'').replace(/'/g,"\\'") + '\')">'
+                return '<div class="search-result-item" onclick="selectCustomer(' + c.id + ',' + JSON.stringify(c.name) + ',' + JSON.stringify(c.phone||'') + ')">'
                     + '<strong>' + c.name + '</strong>'
                     + (c.phone ? ' &mdash; ' + c.phone : '')
                     + '</div>';
@@ -725,6 +406,19 @@ function selectCustomer(id, name, phone) {
     if (dnEl) dnEl.textContent = name + (phone ? ' \u2014 ' + phone : '');
     var panel = document.getElementById('customer_panel');
     if (panel) panel.style.display = 'block';
+    var wrap = document.getElementById('customer_search_wrap');
+    if (wrap) wrap.style.display = 'none';
+    var res = document.getElementById('customer_results');
+    if (res) { res.innerHTML=''; res.style.display='none'; }
+}
+
+function clearCustSearch() {
+    document.getElementById('customer_id').value = '';
+    document.getElementById('customer_panel').style.display = 'none';
+    var wrap = document.getElementById('customer_search_wrap');
+    if (wrap) wrap.style.display = '';
+    var q = document.getElementById('customer_search_q');
+    if (q) { q.value = ''; q.focus(); }
     var res = document.getElementById('customer_results');
     if (res) { res.innerHTML=''; res.style.display='none'; }
 }
