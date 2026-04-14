@@ -171,8 +171,6 @@ body { background: #fff; margin: 0; padding: 10px; }
   <div class="terms-box" style="margin-top:8px;">
     <p>&#9888; <strong>Payment is non-refundable if order is cancelled by customer.</strong></p>
     <p>&#9888; No responsibility for suit after one month of completion.</p>
-    <p>&#9888; 75% advance is required at the time of booking.</p>
-    <p>&#9888; Delivery after 8:00 PM may be delayed.</p>
   </div>
 
   <div style="margin-top:10px; text-align:right; font-size:11px; border-top:1px solid #ccc; padding-top:6px;">

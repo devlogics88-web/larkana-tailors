@@ -459,7 +459,13 @@ if ($action) {
                         'available_meters' => (float)($row[5] ?? $row[4] ?? 0),
                         'cost_per_meter'   => (float)($row[6] ?? 0),
                         'sell_per_meter'   => ($row[7] ?? '') !== '' ? (float)$row[7] : null,
-                        'sell_mode'        => in_array(strtolower(trim($row[8] ?? '')), ['meter','box','both'], true) ? strtolower(trim($row[8])) : 'meter',
+                        'sell_mode'        => (function(string $v): string {
+                            // Accept both legacy "Yes/No" and current "meter/box/both"
+                            $v = strtolower(trim($v));
+                            if ($v === 'yes')  return 'both';
+                            if ($v === 'no')   return 'meter';
+                            return in_array($v, ['meter','box','both'], true) ? $v : 'meter';
+                        })(trim($row[8] ?? '')),
                         'box_quantity'     => (float)($row[9] ?? 0),
                         'box_price'        => (float)($row[10] ?? 0),
                         'notes'            => trim($row[11] ?? ''),
