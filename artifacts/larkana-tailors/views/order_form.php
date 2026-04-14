@@ -190,7 +190,10 @@ $_showCustomerPanel   = $_restoredCustomerId > 0;
 
 <!-- MEASUREMENTS -->
 <div class="card">
-  <div class="card-head">&#128208; Measurements</div>
+  <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;">
+    <span>&#128208; Measurements</span>
+    <span style="font-size:11px;font-weight:normal;color:#9bb0bf;">(optional &mdash; can be added or updated later via Edit)</span>
+  </div>
   <div class="card-body" style="padding:4px;">
 
     <div style="width:44%; margin:0 auto;">

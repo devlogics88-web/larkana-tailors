@@ -37,6 +37,8 @@ $customerRef = $customerId ? 'CID-' . str_pad($customerId, 5, '0', STR_PAD_LEFT)
 <style>
 body { background: #fff; margin: 0; padding: 10px; }
 @media screen { .invoice-wrapper { max-width: 400px; margin: 0 auto; } }
+.terms-box { font-size: 9px; color: #333; border: 1px solid #ccc; padding: 4px 6px; margin-top: 6px; background: #fafafa; }
+.terms-box p { margin: 2px 0; }
 </style>
 </head>
 <body>
@@ -52,8 +54,8 @@ body { background: #fff; margin: 0; padding: 10px; }
   <div style="text-align:center; margin-bottom:4px;">
     <img src="assets/logo.jpeg" alt="Logo" style="height:40px; width:auto;">
   </div>
-  <div class="inv-shop-name">Larkana Fabrics</div>
-  <div class="inv-shop-sub">Gents Specialist &mdash; Lakhmir Khan</div>
+  <div class="inv-shop-name">Larkana Fabrics &amp; Tailors</div>
+  <div class="inv-shop-sub">Gents Specialist</div>
   <div class="inv-shop-sub"><?= h(getSetting('shop_address','SOAN GARDEN, Shahid Arcade, Islamabad')) ?></div>
   <div class="inv-shop-sub">&#128222; <?= h(getSetting('shop_phone','0300-2151261')) ?></div>
   <div class="inv-divider"></div>
@@ -70,7 +72,7 @@ body { background: #fff; margin: 0; padding: 10px; }
   <?php endif; ?>
 
   <?php if (!$isLabour): ?>
-  <!-- Customer details — customer copy only -->
+  <!-- ===================== CUSTOMER COPY ===================== -->
   <div class="inv-section">
     <label>Customer:</label> <strong><?= h($order['customer_name']) ?></strong>
     <?php if ($customerRef): ?>&nbsp;<span style="color:#888;font-size:9px;">(<?= h($customerRef) ?>)</span><?php endif; ?>
@@ -100,26 +102,115 @@ body { background: #fff; margin: 0; padding: 10px; }
   <?php elseif ($order['cloth_source'] === 'self'): ?>
   <div class="inv-section"><label>Cloth:</label> Self (customer's own)</div>
   <?php endif; ?>
+  <?php if ($order['notes']): ?>
+  <div class="inv-section">
+    <label>Notes:</label> <?= h($order['notes']) ?>
+  </div>
   <?php endif; ?>
 
   <div class="inv-divider"></div>
 
-  <!-- MEASUREMENTS — always shown -->
+  <!-- ITEMIZED PRICING — customer copy -->
+  <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px;">
+    <?php if ($order['cloth_source'] === 'shop' && $clothCost > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Cloth (<?= h($metersUsed) ?>m &times; Rs.<?= number_format($sellPerMeter,0) ?>)</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($clothCost) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($stitchingPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Stitching<?= $stitchingName ? ' &mdash; ' . h($stitchingName) : '' ?></td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($stitchingPrice) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($buttonPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Button<?= $buttonName ? ' &mdash; ' . h($buttonName) : '' ?></td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($buttonPrice) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($panchaPrice > 0): ?>
+    <tr>
+      <td style="padding:2px 4px;">Pancha<?= $panchaName ? ' &mdash; ' . h($panchaName) : '' ?></td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($panchaPrice) ?></td>
+    </tr>
+    <?php endif; ?>
+    <?php if ($discount > 0): ?>
+    <tr>
+      <td style="padding:2px 4px; color:#2e7d32;">Discount</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;">- <?= formatMoney($discount) ?></td>
+    </tr>
+    <?php endif; ?>
+    <tr style="background:#e6eaed;">
+      <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount</td>
+      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1B242D;"><?= formatMoney($totalPrice) ?></td>
+    </tr>
+    <tr>
+      <td style="padding:2px 4px;">Advance Paid</td>
+      <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;"><?= formatMoney($advancePaid) ?></td>
+    </tr>
+    <tr style="background:<?= $remaining > 0 ? '#fce4ec' : '#e8f5e9' ?>;">
+      <td style="padding:3px 4px; font-weight:bold; font-size:12px;">Balance Due</td>
+      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:14px; color:<?= $remaining > 0 ? '#c62828' : '#2e7d32' ?>;"><?= formatMoney($remaining) ?></td>
+    </tr>
+  </table>
+
+  <?php if ($paymentMethod || $receivingHand): ?>
+  <div style="font-size:10px; margin-top:4px;">
+    <?php if ($paymentMethod): ?>
+    <span><strong>Payment:</strong> <?= h($paymentMethod) ?></span>
+    <?php endif; ?>
+    <?php if ($receivingHand): ?>
+    &nbsp;&nbsp; <span><strong>Received by:</strong> <?= h($receivingHand) ?></span>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
+
+  <!-- TERMS & CONDITIONS -->
+  <div class="terms-box" style="margin-top:8px;">
+    <p>&#9888; <strong>Payment is non-refundable if order is cancelled by customer.</strong></p>
+    <p>&#9888; No responsibility for suit after one month of completion.</p>
+    <p>&#9888; 75% advance is required at the time of booking.</p>
+    <p>&#9888; Delivery after 8:00 PM may be delayed.</p>
+  </div>
+
+  <div style="margin-top:10px; text-align:right; font-size:11px; border-top:1px solid #ccc; padding-top:6px;">
+    <strong>Signature: ___________________</strong>
+  </div>
+
+  <?php else: ?>
+  <!-- ===================== LABOUR COPY ===================== -->
+  <div class="inv-section">
+    <label>Customer:</label> <strong><?= h($order['customer_name']) ?></strong>
+    <?php if ($customerRef): ?>&nbsp;<span style="color:#888;font-size:9px;">(<?= h($customerRef) ?>)</span><?php endif; ?>
+  </div>
+  <?php if ($order['suit_type'] || $order['stitching_type_name']): ?>
+  <div class="inv-section">
+    <label>Suit:</label> <?= h($order['suit_type'] ?? '') ?>
+    <?= $order['stitching_type_name'] ? ' / ' . h($order['stitching_type_name']) : '' ?>
+  </div>
+  <?php endif; ?>
+  <?php if ($order['notes']): ?>
+  <div class="inv-section"><label>Notes:</label> <?= h($order['notes']) ?></div>
+  <?php endif; ?>
+
+  <div class="inv-divider"></div>
   <div style="font-size:11px; font-weight:bold; margin-bottom:3px;">Measurements:</div>
 
   <?php
   $mainRows = [
     ['Shirt Length',            'shirt_length'],
     ['Arm / Bazu',              'arm'],
-    ['Shoulder',                'shoulder'],
-    ['Collar / Neck',           'collar'],
+    ['Shoulder / Teera',        'shoulder'],
+    ['Collar / Gala',           'collar'],
     ['Chest',                   'chest'],
-    ['Waist',                   'waist'],
-    ['Hip',                     'hip'],
+    ['Kamar / Waist',           'waist'],
+    ['Ghera / Hip',             'hip'],
     ['Shalwar Length',          'shalwar_length'],
     ['Pancha (Shalwar Bottom)', 'shalwar_bottom'],
-    ['Shalwar Waist',           'shalwar_waist'],
-    ['Cuff / Karnok',           'cuff'],
+    ['Shalwar Ghera / Waist',   'shalwar_waist'],
+    ['Color Nok / Cuff',        'cuff'],
   ];
   $hasMain = false;
   foreach ($mainRows as [,$k]) { if (!empty($m[$k])) { $hasMain = true; break; } }
@@ -140,11 +231,11 @@ body { background: #fff; margin: 0; padding: 10px; }
 
   <?php
   $bottomRows = [
-    ['Main Full',    'main_full',    'Front',        'front_style'],
-    ['Main Half',    'main_half',    'Side',         'size_note'],
-    ['Kaf',          'kaf',          'Shalwar Style','shalwar_style'],
-    ['Gera Chorus',  'gera_chorus',  'Gera Oval',    'gera_oval'],
-    ['Harmol',       'harmol',       'Chak Patti Button','chak_patti_button'],
+    ['Bain Full',    'main_full',    'Front',            'front_style'],
+    ['Bain Half',    'main_half',    'Side',             'size_note'],
+    ['Harmol',       'harmol',       'Shalwar Style',    'shalwar_style'],
+    ['Cuff / Kaf',   'kaf',          'Ghera Gol',        'gera_oval'],
+    ['Ghera Chorus', 'gera_chorus',  'Chak Patti Button','chak_patti_button'],
   ];
   $hasBottom = false;
   foreach ($bottomRows as $r) {
@@ -185,83 +276,18 @@ body { background: #fff; margin: 0; padding: 10px; }
   </table>
   <?php endif; ?>
 
-  <?php if (!empty($m['detail']) && !$isLabour): ?>
+  <?php if (!empty($m['detail'])): ?>
   <div class="inv-section" style="margin-top:3px;">
     <label>Detail:</label> <?= h($m['detail']) ?>
   </div>
   <?php endif; ?>
-  <?php if ($order['notes'] && !$isLabour): ?>
-  <div class="inv-section">
-    <label>Notes:</label> <?= h($order['notes']) ?>
-  </div>
-  <?php endif; ?>
-
-  <?php if (!$isLabour): ?>
-  <div class="inv-divider"></div>
-
-  <!-- ITEMIZED PRICING — customer copy only -->
-  <table style="width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px;">
-    <?php if ($order['cloth_source'] === 'shop' && $clothCost > 0): ?>
-    <tr>
-      <td style="padding:2px 4px;">Cloth (<?= h($metersUsed) ?>m &times; Rs.<?= number_format($sellPerMeter,0) ?>)</td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($clothCost) ?></td>
-    </tr>
-    <?php endif; ?>
-    <?php if ($stitchingPrice > 0): ?>
-    <tr>
-      <td style="padding:2px 4px;">Stitching<?= $stitchingName ? ' — ' . h($stitchingName) : '' ?></td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($stitchingPrice) ?></td>
-    </tr>
-    <?php endif; ?>
-    <?php if ($buttonPrice > 0): ?>
-    <tr>
-      <td style="padding:2px 4px;">Button<?= $buttonName ? ' — ' . h($buttonName) : '' ?></td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($buttonPrice) ?></td>
-    </tr>
-    <?php endif; ?>
-    <?php if ($panchaPrice > 0): ?>
-    <tr>
-      <td style="padding:2px 4px;">Pancha<?= $panchaName ? ' — ' . h($panchaName) : '' ?></td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold;"><?= formatMoney($panchaPrice) ?></td>
-    </tr>
-    <?php endif; ?>
-    <?php if ($discount > 0): ?>
-    <tr>
-      <td style="padding:2px 4px; color:#2e7d32;">Discount</td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;">- <?= formatMoney($discount) ?></td>
-    </tr>
-    <?php endif; ?>
-    <tr style="background:#e6eaed;">
-      <td style="padding:3px 4px; font-weight:bold; font-size:13px;">Total Amount</td>
-      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:15px; color:#1B242D;"><?= formatMoney($totalPrice) ?></td>
-    </tr>
-    <tr>
-      <td style="padding:2px 4px;">Advance Paid</td>
-      <td style="padding:2px 4px; text-align:right; font-weight:bold; color:#2e7d32;"><?= formatMoney($advancePaid) ?></td>
-    </tr>
-    <tr style="background:<?= $remaining > 0 ? '#fce4ec' : '#e8f5e9' ?>;">
-      <td style="padding:3px 4px; font-weight:bold; font-size:12px;">Balance Due</td>
-      <td style="padding:3px 4px; text-align:right; font-weight:bold; font-size:14px; color:<?= $remaining > 0 ? '#c62828' : '#2e7d32' ?>;"><?= formatMoney($remaining) ?></td>
-    </tr>
-  </table>
-
-  <?php if ($paymentMethod || $receivingHand): ?>
-  <div style="font-size:10px; margin-top:4px;">
-    <?php if ($paymentMethod): ?>
-    <span><strong>Payment:</strong> <?= h($paymentMethod) ?></span>
-    <?php endif; ?>
-    <?php if ($receivingHand): ?>
-    &nbsp;&nbsp; <span><strong>Received by:</strong> <?= h($receivingHand) ?></span>
-    <?php endif; ?>
-  </div>
-  <?php endif; ?>
-  <?php endif; ?>
+  <?php endif; /* end labour copy */ ?>
 
   <div class="inv-divider"></div>
   <div class="inv-footer">
     Thank you for your trust!<br>
-    Larkana Fabrics<br>
-    <?= h(getSetting('shop_phone','0300-2151261')) ?>
+    <strong>Larkana Fabrics &amp; Tailors</strong><br>
+    Gents Specialist &mdash; <?= h(getSetting('shop_phone','0300-2151261')) ?>
   </div>
 </div>
 </body>

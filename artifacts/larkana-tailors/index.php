@@ -426,6 +426,52 @@ if ($action) {
             header('Location: ' . ($customerId ? "?page=customer_orders&customer_id=$customerId" : '?page=customers'));
             exit;
 
+        case 'export_stock_csv':
+            requireAdmin();
+            exportStockCsv();
+            exit;
+
+        case 'import_stock_csv':
+            requireAdmin();
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
+            verifyCsrf();
+            if (empty($_FILES['csv_file']['tmp_name'])) {
+                flash('stock_err', 'No file uploaded.');
+                header('Location: ?page=stock'); exit;
+            }
+            $tmpPath = $_FILES['csv_file']['tmp_name'];
+            $handle  = fopen($tmpPath, 'r');
+            if (!$handle) { flash('stock_err', 'Could not read the uploaded file.'); header('Location: ?page=stock'); exit; }
+            $imported = 0; $skipped = 0; $firstRow = true;
+            while (($row = fgetcsv($handle)) !== false) {
+                if ($firstRow) { $firstRow = false; continue; } // skip header
+                if (count($row) < 5) { $skipped++; continue; }
+                // Columns: 0=ID(skip), 1=Brand Name, 2=Cloth Type, 3=Stock Date, 4=Total Meters, 5=Available Meters, 6=Cost/Meter, 7=Sell/Meter, 8=Has Box, 9=Box Qty, 10=Box Price, 11=Notes
+                $brand = trim($row[1] ?? '');
+                if (!$brand) { $skipped++; continue; }
+                try {
+                    saveStockItem([
+                        'id'               => null,
+                        'brand_name'       => $brand,
+                        'cloth_type'       => trim($row[2] ?? ''),
+                        'stock_date'       => trim($row[3] ?? '') ?: date('Y-m-d'),
+                        'total_meters'     => (float)($row[4] ?? 0),
+                        'available_meters' => (float)($row[5] ?? $row[4] ?? 0),
+                        'cost_per_meter'   => (float)($row[6] ?? 0),
+                        'sell_per_meter'   => ($row[7] ?? '') !== '' ? (float)$row[7] : null,
+                        'has_box'          => strtolower(trim($row[8] ?? '')) === 'yes' ? 1 : 0,
+                        'box_quantity'     => (float)($row[9] ?? 0),
+                        'box_price'        => (float)($row[10] ?? 0),
+                        'notes'            => trim($row[11] ?? ''),
+                    ]);
+                    $imported++;
+                } catch (Exception $e) { $skipped++; }
+            }
+            fclose($handle);
+            flash('stock_ok', "CSV import complete: $imported items imported, $skipped skipped.");
+            header('Location: ?page=stock');
+            exit;
+
         case 'save_stock':
             requireAdmin();
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: ?page=stock'); exit; }
@@ -435,10 +481,14 @@ if ($action) {
                     'id'              => (int)($_POST['stock_id'] ?? 0) ?: null,
                     'brand_name'      => trim($_POST['brand_name'] ?? ''),
                     'cloth_type'      => trim($_POST['cloth_type'] ?? ''),
+                    'stock_date'      => trim($_POST['stock_date'] ?? '') ?: date('Y-m-d'),
                     'total_meters'    => (float)($_POST['total_meters'] ?? 0),
                     'available_meters'=> (float)($_POST['avail_meters'] ?? $_POST['total_meters'] ?? 0),
                     'cost_per_meter'  => (float)($_POST['cost_meter'] ?? 0),
                     'sell_per_meter'  => ($_POST['sell_meter'] ?? '') !== '' ? (float)$_POST['sell_meter'] : null,
+                    'has_box'         => isset($_POST['has_box']) ? 1 : 0,
+                    'box_quantity'    => (float)($_POST['box_quantity'] ?? 0),
+                    'box_price'       => (float)($_POST['box_price'] ?? 0),
                     'notes'           => trim($_POST['stock_notes'] ?? ''),
                 ];
                 if (!$data['brand_name']) throw new RuntimeException('Brand name is required.');

@@ -1,17 +1,179 @@
-# Larkana Tailors & Cloth House
+# Larkana Fabrics & Tailors — Shop Management System
 
 **Gents Specialist** | Owner: Lakhmir Khan | Phone: 0300-2151261  
-SOAN GARDEN, Shahid Arcade, Main Double Road, Opposite Bank Islami, Islamabad
+SOAN GARDEN, Shahid Arcade, Main Double Road, Islamabad
 
 ---
 
-## About
+## Tech Stack
 
-This is a lightweight shop management web application for Larkana Tailors & Cloth House. Built with:
-- **PHP 8.4** (server-side rendering)
-- **SQLite** (local database via PHP PDO — no server needed)
-- **Vanilla JavaScript** (interactivity)
-- **Custom CSS** (compact old-style business UI)
+| Layer       | Technology                                          |
+|-------------|-----------------------------------------------------|
+| Backend     | PHP 8.4 (built-in server or XAMPP)                  |
+| Database    | SQLite 3 via PDO (no MySQL or server required)      |
+| Frontend    | Vanilla JavaScript — no frameworks                  |
+| Styling     | Custom CSS — no Bootstrap or Tailwind               |
+| Exports     | CSV via PHP native `fputcsv` / `fgetcsv`            |
+
+No Composer or external PHP packages required.
+
+---
+
+## Features
+
+- **Admin / Worker login** with role-based access control
+- **Customer management** with CID (Customer ID) number and search
+- **Order management** — create, edit, track status (Pending / Ready / Delivered)
+- **Measurement form** — 20+ measurement fields, all completely optional
+- **Itemized invoices** — stitching, button, pancha add-ons, discount, advance tracking
+- **Dual print copies** — Customer Copy (no measurements) + Labour/Stitching Copy (with measurements)
+- **Stock management** — meter stock, box sets, date received, CSV export & import
+- **Admin-configurable pricing** — stitching types, button types, pancha types
+- **Payment tracking** — advance paid, balance due, dues clearing per order
+- **Dark #1B242D professional color theme**
+
+---
+
+## Installation on Windows (XAMPP)
+
+### Step 1 — Download and Install XAMPP
+
+1. Go to [https://www.apachefriends.org/](https://www.apachefriends.org/) and download XAMPP for Windows.
+2. Run the installer. You only need **Apache** and **PHP** — MySQL is not required for this app.
+3. Install to `C:\xampp\` (default location).
+
+### Step 2 — Enable SQLite in PHP
+
+1. Open `C:\xampp\php\php.ini` in Notepad (run Notepad as Administrator if needed).
+2. Press **Ctrl+F** and search for `extension=pdo_sqlite`.
+3. If the line starts with a semicolon `;`, remove the semicolon to uncomment it:
+   ```
+   extension=pdo_sqlite
+   ```
+4. Also uncomment `extension=sqlite3` the same way.
+5. Save and close `php.ini`.
+
+### Step 3 — Copy the Application Files
+
+Copy the entire `larkana-tailors` folder to:
+
+```
+C:\xampp\htdocs\larkana-tailors\
+```
+
+The final structure should look like:
+
+```
+C:\xampp\htdocs\larkana-tailors\
+    index.php
+    router.php
+    assets\
+    includes\
+    views\
+    data\        ← SQLite database will be created here automatically
+```
+
+### Step 4 — Set Write Permissions on the Data Folder
+
+The `data\` folder needs write access so Apache can create and write the SQLite database file.
+
+**Option A — Using File Explorer:**
+1. Right-click `C:\xampp\htdocs\larkana-tailors\data\`
+2. Click Properties → Security tab → Edit → Add
+3. Type `Everyone` → click OK → check **Full control** → click Apply → OK
+
+**Option B — Using Command Prompt (run as Administrator):**
+
+```cmd
+icacls "C:\xampp\htdocs\larkana-tailors\data" /grant Everyone:(OI)(CI)F
+```
+
+### Step 5 — Start Apache in XAMPP
+
+1. Open **XAMPP Control Panel** from the Start Menu or `C:\xampp\xampp-control.exe`.
+2. Click **Start** next to **Apache**.
+3. The status indicator should turn green and show the port number.
+
+### Step 6 — Open the Application
+
+Open your browser and navigate to:
+
+```
+http://localhost/larkana-tailors/
+```
+
+The app will automatically create the `data/larkana.db` SQLite database on first load.
+
+### Step 7 — Login
+
+| Field    | Value      |
+|----------|------------|
+| Username | `larkana`  |
+| Password | `tailor`   |
+
+---
+
+## Running Without XAMPP (PHP Built-in Server)
+
+If PHP 8.4 is installed on your system (or you are running on Replit):
+
+```bash
+php -S 0.0.0.0:8000 router.php
+```
+
+Then open: `http://localhost:8000/`
+
+---
+
+## Database Backup
+
+The entire database is a single portable file:
+
+```
+C:\xampp\htdocs\larkana-tailors\data\larkana.db
+```
+
+- **To back up:** Copy `larkana.db` to a USB drive, external hard disk, or cloud storage (Google Drive / Dropbox).
+- **To restore:** Replace `data\larkana.db` with your saved backup file.
+- **Recommended:** Perform a backup at least once a week.
+
+---
+
+## Stock CSV Export & Import
+
+### Export
+
+1. Go to **Stock** page in the app.
+2. Click **Export CSV** button.
+3. A CSV file named `larkana-stock-YYYY-MM-DD.csv` will download automatically.
+
+### Import
+
+1. Click **Import CSV** on the Stock page.
+2. Select a CSV file with the correct column format:
+
+```
+ID, Brand Name, Cloth Type, Stock Date, Total Meters, Available Meters,
+Cost/Meter, Sell/Meter, Has Box (Yes/No), Box Quantity, Box Price, Notes
+```
+
+The first row is treated as a header and skipped. New rows are added; existing items are not overwritten.
+
+---
+
+## Thermal Printer Setup
+
+Invoices are designed for **58mm or 80mm thermal receipt printers**.
+
+1. Connect the thermal printer via USB to your Windows PC.
+2. Install the printer driver (supplied with the printer or downloadable from manufacturer website).
+3. In Windows: Settings → Printers & Scanners → set your thermal printer as default.
+4. Open an invoice in the app → click **Print**.
+5. In the print dialog:
+   - Select your **thermal printer**
+   - Set paper size to **58mm** or **80mm**
+   - Set margins to **None** or **Minimum**
+   - Disable browser headers/footers if shown
 
 ---
 
@@ -21,65 +183,10 @@ This is a lightweight shop management web application for Larkana Tailors & Clot
 |-------|----------|----------|
 | Admin | larkana  | tailor   |
 
-Workers can be added from the Admin panel (Workers section).
+To add worker accounts: log in as Admin → Settings → Workers → Add New Worker.
 
-> **First worker setup:** After logging in as admin, navigate to **Workers** in the sidebar and click
-> **Add New Worker**. Set a username and password for each tailor/assistant. Workers can then log in
-> and manage orders but will not see financial data, reports, or deletion controls.
-
-**Admin can:**
-- Full access to all modules
-- View financial data (sales, profits, remaining)
-- Manage stock, workers, delete records
-- View reports
-
-**Worker can:**
-- Create and edit orders
-- Search customers
-- Print invoices (customer copy shows order amount/advance/remaining for payment collection)
-- Cannot delete master data, manage stock, view profit/loss reports, or access aggregate financial summaries
-
----
-
-## Features
-
-1. **Login** — Role-based access (Admin / Worker)
-2. **Dashboard** — Live order summary and quick stats
-3. **New Order** — Full order entry with customer search and measurement form
-4. **All Orders** — Search/filter orders by status, customer, phone
-5. **Customer Search** — Find customer history by name or phone
-6. **Stock Management** — Add cloth brands, track meters, auto-deduct from orders
-7. **Invoice Printing** — Customer Copy + Stitching Labour Copy (thermal printer friendly)
-8. **Reports** — Admin-only sales summary, profit/loss estimate, monthly breakdown
-9. **Workers** — Add/remove worker accounts
-
----
-
-## Running Locally (Development)
-
-### Option 1: Replit (Current)
-
-Already running — use the Replit preview URL.
-
-### Option 2: XAMPP / WAMP on Windows
-
-1. Install [XAMPP](https://www.apachefriends.org/) or [WAMP](https://www.wampserver.com/)
-2. Copy the `larkana-tailors` folder to your `htdocs` (XAMPP) or `www` (WAMP) directory
-3. Make sure the `data/` folder exists and is writable
-4. Open: `http://localhost/larkana-tailors/`
-5. Enable **SQLite PDO** in `php.ini` (usually enabled by default in XAMPP/WAMP):
-   ```
-   extension=pdo_sqlite
-   ```
-
-### Option 3: PHP Built-in Server (Any OS with PHP)
-
-```bash
-cd artifacts/larkana-tailors
-php -S 0.0.0.0:8080 router.php
-```
-
-Then open: `http://localhost:8080`
+**Admin can:** Full access — all modules, financial data, reports, delete records, manage stock and pricing.  
+**Worker can:** Create/edit orders, search customers, print invoices. Cannot delete master data, manage stock, or view profit reports.
 
 ---
 
@@ -87,74 +194,38 @@ Then open: `http://localhost:8080`
 
 ```
 larkana-tailors/
-├── index.php           # Front controller (routes all requests)
-├── router.php          # PHP built-in server router
-├── data/
-│   └── larkana.db      # SQLite database (auto-created on first run)
+├── index.php           Main router and all action handlers
+├── router.php          PHP built-in server router
+├── assets/
+│   ├── style.css       All UI styles
+│   ├── app.js          Frontend JavaScript
+│   └── logo.jpeg       Shop logo
 ├── includes/
-│   ├── db.php          # Database connection + schema init + seeding
-│   ├── auth.php        # Authentication helpers
-│   ├── functions.php   # Business logic (CRUD helpers)
-│   ├── header.php      # HTML layout header + sidebar
-│   └── footer.php      # HTML layout footer
+│   ├── db.php          Database init, schema, migrations, seeding
+│   ├── functions.php   All business logic functions
+│   ├── header.php      Topbar, sidebar, navigation
+│   └── footer.php      Status bar, developer credit
 ├── views/
-│   ├── login.php
 │   ├── dashboard.php
-│   ├── order_form.php  # New & edit order (same view)
-│   ├── order_list.php
 │   ├── customers.php
 │   ├── customer_orders.php
+│   ├── order_form.php
+│   ├── orders.php
 │   ├── stock.php
+│   ├── invoice.php
 │   ├── reports.php
 │   ├── workers.php
-│   └── invoice.php     # Customer Copy + Labour Copy
-├── assets/
-│   ├── style.css
-│   └── app.js
-└── README.md
+│   └── settings.php
+└── data/
+    └── larkana.db      SQLite database (auto-created on first run)
 ```
 
 ---
 
-## Thermal Printer Setup
+## Developer Contact
 
-Invoices use `@media print` CSS for compact thermal printer layout (72mm).
+Developed with love by:
 
-1. Open the invoice (Customer Copy or Labour Copy) in browser
-2. Press **Print** button
-3. In print dialog:
-   - Select your **thermal printer** (e.g. Xprinter, EPSON TM-T88)
-   - Set paper size to **72mm** or **Receipt**
-   - Set margins to **None** or **Minimum**
-   - Disable headers/footers
-
----
-
-## Backup
-
-The entire database is in one file: `data/larkana.db`
-
-**To backup:** Copy `data/larkana.db` to a USB drive or cloud storage.  
-**To restore:** Replace `data/larkana.db` with your backup copy.
-
----
-
-## Windows Desktop App (Future)
-
-To wrap this as a Windows desktop app using Electron:
-
-1. Install [Node.js](https://nodejs.org/)
-2. Run: `npm install -g electron`
-3. Create `main.js` with Electron BrowserWindow pointing to `http://localhost:8080`
-4. Start the PHP server in background via Node's `child_process`
-5. Build with `electron-builder` for Windows
-
-This codebase is fully Electron-ready — no changes needed to the PHP code.
-
----
-
-## Support
-
-**Owner:** Lakhmir Khan  
-**Phone:** 0300-2151261  
-**Shop:** Larkana Tailors & Cloth House, SOAN GARDEN, Islamabad
+**SYED SHAAN HAIDER**  
+Full Stack Web Developer / Software Engineer  
+Phone / WhatsApp: **+923440986924**

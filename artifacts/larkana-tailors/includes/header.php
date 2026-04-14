@@ -7,15 +7,17 @@ $user = currentUser();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Larkana Fabrics</title>
+<title>Larkana Fabrics &amp; Tailors</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-left" style="display:flex;align-items:center;gap:8px;">
     <img src="assets/logo.jpeg" alt="Logo" style="height:26px;width:auto;border-radius:2px;">
-    <span class="shop-name">Larkana Fabrics</span>
-    <span class="shop-sub">Gents Specialist &mdash; Islamabad</span>
+    <div style="display:flex;flex-direction:column;line-height:1.2;">
+      <span class="shop-name">Larkana Fabrics &amp; Tailors</span>
+      <span class="shop-sub">Gents Specialist &mdash; Islamabad</span>
+    </div>
   </div>
   <div class="topbar-right">
     <span class="user-info">&#128100; <?= h($user['full_name'] ?: $user['username']) ?> (<?= h(ucfirst($user['role'])) ?>)</span>

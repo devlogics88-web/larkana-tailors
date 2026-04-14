@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login &mdash; Larkana Fabrics</title>
+<title>Login &mdash; Larkana Fabrics &amp; Tailors</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body style="background: linear-gradient(135deg, #0a1018 0%, #1B242D 55%, #253240 100%); min-height:100vh;">
@@ -12,7 +12,7 @@
   <div class="login-head" style="padding:20px 16px 14px;">
     <img src="assets/logo.jpeg" alt="Larkana Fabrics Logo"
          style="height:80px; width:auto; display:block; margin:0 auto 10px; border-radius:4px; object-fit:cover;">
-    <h1 style="font-size:18px; letter-spacing:.5px;">Larkana Fabrics</h1>
+    <h1 style="font-size:18px; letter-spacing:.5px;">Larkana Fabrics &amp; Tailors</h1>
     <p style="font-size:12px; color:#9bb0bf; margin-top:4px;">Gents Specialist &mdash; Islamabad</p>
   </div>
   <div class="login-body">

@@ -41,7 +41,7 @@ $panchaTypes    = getPanchaTypes();
     <div class="form-grid">
       <div class="form-group">
         <label>Shop Name</label>
-        <input type="text" name="shop_name" value="<?= h(getSetting('shop_name','Larkana Fabrics')) ?>">
+        <input type="text" name="shop_name" value="<?= h(getSetting('shop_name','Larkana Fabrics & Tailors')) ?>">
       </div>
       <div class="form-group">
         <label>Phone</label>

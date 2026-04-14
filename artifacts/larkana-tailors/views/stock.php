@@ -4,6 +4,9 @@ $buttonTypes = getButtonTypes();
 ?>
 <div class="page-header">
   <h2>&#128229; Stock Management</h2>
+  <div style="display:flex;gap:8px;">
+    <a href="?action=export_stock_csv" class="btn btn-sm" style="background:#1565c0;color:#fff;">&#11015; Export CSV</a>
+  </div>
 </div>
 
 <?php if ($msg = flash('stock_ok')): ?>
@@ -13,25 +16,53 @@ $buttonTypes = getButtonTypes();
 <div class="alert alert-error"><?= h($err) ?></div>
 <?php endif; ?>
 
+<!-- IMPORT CSV -->
+<div class="card" id="import-card" style="display:none;">
+  <div class="card-head" style="background:#0d47a1;color:#fff;">&#11014; Import Stock from CSV</div>
+  <div class="card-body">
+    <p style="margin-bottom:8px;color:#546e7a;font-size:12px;">
+      CSV must have columns: <strong>Brand Name, Cloth Type, Stock Date, Total Meters, Available Meters, Cost/Meter, Sell/Meter, Has Box (Yes/No), Box Quantity, Box Price, Notes</strong>.<br>
+      First row is treated as header and skipped. Existing items are NOT overwritten.
+    </p>
+    <form method="POST" action="?action=import_stock_csv" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="file" name="csv_file" accept=".csv,text/csv" required style="border:1px solid var(--border);padding:4px;background:#fff;color:#333;font-size:12px;">
+        <button type="submit" class="btn btn-success btn-sm">&#11014; Import</button>
+        <button type="button" class="btn btn-sm" style="background:#546e7a;color:#fff;" onclick="document.getElementById('import-card').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="form-grid-2" style="align-items:start;">
 
 <!-- ADD/EDIT CLOTH STOCK FORM -->
 <div class="card" id="stock-form">
   <div class="card-head">
     <span id="stock_form_title">Add New Stock Item</span>
-    <a href="#" onclick="resetStock();return false;" class="btn btn-sm" style="float:right;background:#78909c;color:#fff;">&#8635; Reset</a>
+    <div style="float:right;display:flex;gap:6px;">
+      <button type="button" class="btn btn-sm" style="background:#0d47a1;color:#fff;" onclick="toggleImport()">&#11014; Import CSV</button>
+      <a href="#" onclick="resetStock();return false;" class="btn btn-sm" style="background:#78909c;color:#fff;">&#8635; Reset</a>
+    </div>
   </div>
   <div class="card-body">
     <form method="POST" action="?action=save_stock">
       <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
       <input type="hidden" name="stock_id" id="stock_id" value="">
-      <div class="form-group mb-8">
-        <label>Brand Name *</label>
-        <input type="text" name="brand_name" id="brand_name" required placeholder="e.g. Pasha, Gul Ahmed, J.">
+      <div class="form-grid-2 mb-8">
+        <div class="form-group">
+          <label>Brand Name *</label>
+          <input type="text" name="brand_name" id="brand_name" required placeholder="e.g. Pasha, Gul Ahmed, J.">
+        </div>
+        <div class="form-group">
+          <label>Cloth Type</label>
+          <input type="text" name="cloth_type" id="cloth_type" placeholder="e.g. Cotton, Lawn, Khaddar">
+        </div>
       </div>
       <div class="form-group mb-8">
-        <label>Cloth Type</label>
-        <input type="text" name="cloth_type" id="cloth_type" placeholder="e.g. Cotton, Lawn, Khaddar, Wash&Wear">
+        <label>Date of Stock</label>
+        <input type="date" name="stock_date" id="stock_date" value="<?= date('Y-m-d') ?>">
       </div>
       <div class="form-grid-2 mb-8">
         <div class="form-group">
@@ -53,9 +84,30 @@ $buttonTypes = getButtonTypes();
           <input type="number" name="sell_meter" id="sell_meter" step="1" min="0" placeholder="e.g. 500">
         </div>
       </div>
+
+      <!-- BOX SECTION -->
+      <div class="form-group mb-8">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" name="has_box" id="has_box" value="1" onchange="toggleBoxFields()">
+          <strong>This stock also sells in Box Sets</strong>
+        </label>
+      </div>
+      <div id="box-fields" style="display:none; background:#e8f5e9; padding:8px; border:1px solid #a5d6a7; margin-bottom:8px;">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Box Quantity (suits/pieces per box)</label>
+            <input type="number" name="box_quantity" id="box_quantity" step="0.5" min="0" placeholder="e.g. 5">
+          </div>
+          <div class="form-group">
+            <label>Box Set Price Rs.</label>
+            <input type="number" name="box_price" id="box_price" step="50" min="0" placeholder="e.g. 8000">
+          </div>
+        </div>
+      </div>
+
       <div class="form-group mb-8">
         <label>Notes</label>
-        <input type="text" name="stock_notes" id="stock_notes" placeholder="Any notes...">
+        <input type="text" name="stock_notes" id="stock_notes" placeholder="Any notes about this batch...">
       </div>
       <button type="submit" class="btn btn-success">&#10003; Save Stock Item</button>
     </form>
@@ -74,10 +126,11 @@ $buttonTypes = getButtonTypes();
         <tr>
           <th>Brand</th>
           <th>Type</th>
-          <th>Total M</th>
+          <th>Date</th>
           <th>Avail M</th>
           <th>Cost/M</th>
           <th>Sell/M</th>
+          <th>Box</th>
           <th>Value</th>
           <th>Actions</th>
         </tr>
@@ -85,14 +138,23 @@ $buttonTypes = getButtonTypes();
       <tbody>
         <?php foreach ($stocks as $s):
           $low = $s['available_meters'] < 5;
+          $hasBox = (int)($s['has_box'] ?? 0);
         ?>
         <tr>
           <td class="bold"><?= h($s['brand_name']) ?></td>
           <td><?= h($s['cloth_type'] ?? '-') ?></td>
-          <td><?= h($s['total_meters']) ?>m</td>
+          <td style="white-space:nowrap;font-size:11px;"><?= $s['stock_date'] ? date('d-M-Y', strtotime($s['stock_date'])) : '-' ?></td>
           <td class="<?= $low ? 'red bold' : 'green bold' ?>"><?= h($s['available_meters']) ?>m <?= $low ? '&#9888;' : '' ?></td>
           <td><?= $s['cost_per_meter'] ? formatMoney($s['cost_per_meter']) : '-' ?></td>
           <td><?= $s['sell_per_meter'] ? formatMoney($s['sell_per_meter']) : '-' ?></td>
+          <td style="font-size:11px;">
+            <?php if ($hasBox): ?>
+            <span style="color:#2e7d32;font-weight:bold;">&#9744; Yes</span><br>
+            <span style="color:#555;"><?= h($s['box_quantity'] ?? 0) ?> pcs @ <?= formatMoney($s['box_price'] ?? 0) ?></span>
+            <?php else: ?>
+            <span style="color:#999;">-</span>
+            <?php endif; ?>
+          </td>
           <td><?= formatMoney($s['available_meters'] * $s['cost_per_meter']) ?></td>
           <td style="white-space:nowrap;">
             <a href="#" class="btn btn-info btn-sm"
@@ -162,7 +224,10 @@ $buttonTypes = getButtonTypes();
           <td class="bold"><?= formatMoney($bt['price']) ?></td>
           <td style="white-space:nowrap;">
             <a href="#" class="btn btn-info btn-sm"
-               onclick="editBtn(<?= h($bt['id']) ?>, <?= h(json_encode($bt['name'])) ?>, <?= h($bt['price']) ?>);return false;">Edit</a>
+               data-btid="<?= (int)$bt['id'] ?>"
+               data-btname="<?= h($bt['name']) ?>"
+               data-btprice="<?= h($bt['price']) ?>"
+               onclick="editBtnFromData(this);return false;">Edit</a>
             <form method="POST" action="?action=delete_button_type" style="display:inline;"
                   onsubmit="return confirm('Delete button type: <?= h($bt['name']) ?>?')">
               <input type="hidden" name="csrf" value="<?= h(getCsrf()) ?>">
@@ -186,7 +251,7 @@ $buttonTypes = getButtonTypes();
   <div class="card-head" style="background:#c62828; color:#fff;">&#9888; Danger Zone — Delete All Stocks</div>
   <div class="card-body">
     <p style="color:#c62828; font-weight:bold; margin-bottom:8px;">
-      WARNING: This will permanently delete ALL stock items, cloth stock, and all stock transactions. Orders will be updated to self-cloth. This cannot be undone.
+      WARNING: This will permanently delete ALL stock items and all stock transactions. Orders will be updated to self-cloth. This cannot be undone.
     </p>
     <button type="button" class="btn btn-danger" onclick="showDeleteAllStocks()">&#128465; Delete All Stocks</button>
     <div id="delete-stocks-confirm" style="display:none; margin-top:12px; background:#fff3e0; padding:10px; border:1px solid #e65100;">
@@ -204,6 +269,15 @@ $buttonTypes = getButtonTypes();
 <?php endif; ?>
 
 <script>
+function toggleImport() {
+    var c = document.getElementById('import-card');
+    c.style.display = c.style.display === 'none' ? 'block' : 'none';
+}
+function toggleBoxFields() {
+    var cb = document.getElementById('has_box');
+    var box = document.getElementById('box-fields');
+    box.style.display = cb && cb.checked ? 'block' : 'none';
+}
 function showDeleteAllStocks() {
     document.getElementById('delete-stocks-confirm').style.display = 'block';
     document.getElementById('confirm_word_stocks').focus();
@@ -219,21 +293,31 @@ function validateStockDelete(form) {
 function resetStock() {
     document.getElementById('stock_id').value = '';
     document.getElementById('stock_form_title').textContent = 'Add New Stock Item';
-    ['brand_name','cloth_type','total_meters','avail_meters','cost_meter','sell_meter','stock_notes'].forEach(function(id){
+    ['brand_name','cloth_type','total_meters','avail_meters','cost_meter','sell_meter','stock_notes','box_quantity','box_price'].forEach(function(id){
         var el = document.getElementById(id); if(el) el.value = '';
     });
+    document.getElementById('stock_date').value = '<?= date('Y-m-d') ?>';
+    var cb = document.getElementById('has_box');
+    if (cb) cb.checked = false;
+    toggleBoxFields();
 }
 function editStockFromData(el) {
     var s = JSON.parse(el.getAttribute('data-stock'));
-    document.getElementById('stock_id').value = s.id;
+    document.getElementById('stock_id').value       = s.id;
     document.getElementById('stock_form_title').textContent = 'Edit Stock Item';
-    document.getElementById('brand_name').value  = s.brand_name  || '';
-    document.getElementById('cloth_type').value  = s.cloth_type  || '';
-    document.getElementById('total_meters').value= s.total_meters|| '';
-    document.getElementById('avail_meters').value= s.available_meters|| '';
-    document.getElementById('cost_meter').value  = s.cost_per_meter || '';
-    document.getElementById('sell_meter').value  = s.sell_per_meter || '';
-    document.getElementById('stock_notes').value = s.notes || '';
+    document.getElementById('brand_name').value     = s.brand_name  || '';
+    document.getElementById('cloth_type').value     = s.cloth_type  || '';
+    document.getElementById('stock_date').value     = s.stock_date  || '<?= date('Y-m-d') ?>';
+    document.getElementById('total_meters').value   = s.total_meters || '';
+    document.getElementById('avail_meters').value   = s.available_meters || '';
+    document.getElementById('cost_meter').value     = s.cost_per_meter || '';
+    document.getElementById('sell_meter').value     = s.sell_per_meter || '';
+    document.getElementById('stock_notes').value    = s.notes || '';
+    var cb = document.getElementById('has_box');
+    if (cb) { cb.checked = !!parseInt(s.has_box); }
+    document.getElementById('box_quantity').value   = s.box_quantity || '';
+    document.getElementById('box_price').value      = s.box_price || '';
+    toggleBoxFields();
     document.getElementById('stock-form').scrollIntoView({behavior:'smooth'});
 }
 function resetBtn() {
@@ -242,10 +326,10 @@ function resetBtn() {
     document.getElementById('bt_price').value = '';
     document.getElementById('btn_form_title').textContent = 'Add Button Type';
 }
-function editBtn(id, name, price) {
-    document.getElementById('bt_id').value = id;
-    document.getElementById('bt_name').value = name;
-    document.getElementById('bt_price').value = price;
+function editBtnFromData(el) {
+    document.getElementById('bt_id').value    = el.getAttribute('data-btid');
+    document.getElementById('bt_name').value  = el.getAttribute('data-btname');
+    document.getElementById('bt_price').value = el.getAttribute('data-btprice');
     document.getElementById('btn_form_title').textContent = 'Edit Button Type';
     document.getElementById('btn-form').scrollIntoView({behavior:'smooth'});
 }

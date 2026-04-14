@@ -189,6 +189,10 @@ function initSchema(PDO $pdo): void {
         "ALTER TABLE orders ADD COLUMN dues_cleared INTEGER DEFAULT 0",
         "ALTER TABLE orders ADD COLUMN cleared_at TEXT",
         "ALTER TABLE orders ADD COLUMN cleared_by INTEGER",
+        "ALTER TABLE stock_items ADD COLUMN stock_date DATE",
+        "ALTER TABLE stock_items ADD COLUMN has_box INTEGER DEFAULT 0",
+        "ALTER TABLE stock_items ADD COLUMN box_quantity REAL DEFAULT 0",
+        "ALTER TABLE stock_items ADD COLUMN box_price REAL DEFAULT 0",
     ];
     foreach ($migrations as $sql) {
         try { $pdo->exec($sql); } catch (PDOException $ignored) {}
@@ -210,7 +214,7 @@ function initSchema(PDO $pdo): void {
         ('shop_address', 'SOAN GARDEN, Shahid Arcade, Main Double Road, Islamabad')
     ");
     // Migrations: update existing settings to new values
-    $pdo->exec("UPDATE settings SET value='Larkana Fabrics' WHERE key='shop_name' AND value LIKE '%Larkana Tailors%'");
+    $pdo->exec("UPDATE settings SET value='Larkana Fabrics & Tailors' WHERE key='shop_name'");
     $pdo->exec("UPDATE settings SET value='2300' WHERE key='default_stitching_price' AND CAST(value AS REAL) < 2300");
 
     // Seed stitching types
